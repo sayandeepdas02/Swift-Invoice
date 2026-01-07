@@ -139,19 +139,6 @@ swift-invoice/
 
 ---
 
-## 📸 Screenshots
-
-### Landing Page
-![Landing Page](https://via.placeholder.com/800x400?text=Landing+Page+Screenshot)
-
-### Invoice Builder
-![Invoice Builder](https://via.placeholder.com/800x400?text=Invoice+Builder+Screenshot)
-
-### Generated PDF
-![PDF Preview](https://via.placeholder.com/800x400?text=PDF+Preview+Screenshot)
-
----
-
 ## 🎨 Design Philosophy
 
 Swift Invoice follows a **modern SaaS design** approach:
