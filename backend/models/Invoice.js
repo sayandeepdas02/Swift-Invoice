@@ -35,7 +35,7 @@ const invoiceSchema = new mongoose.Schema({
 
     // Invoice Items
     items: [{
-        description: { type: String, required: true },
+        description: { type: String, required: false },
         quantity: { type: Number, required: true, default: 1 },
         rate: { type: Number, required: true, default: 0 },
         amount: { type: Number, required: true }

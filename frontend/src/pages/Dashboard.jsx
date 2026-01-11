@@ -112,7 +112,20 @@ const Dashboard = () => {
             const invoiceId = response.data._id;
 
             // Trigger download
-            window.open(`http://localhost:5001/api/invoices/${invoiceId}/download`, '_blank');
+            // Download PDF
+            const pdfResponse = await axios.get(`http://localhost:5001/api/invoices/${invoiceId}/download`, {
+                responseType: 'blob'
+            });
+
+            // Create download link
+            const url = window.URL.createObjectURL(new Blob([pdfResponse.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `INV-${invoice.invoiceNumber}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
             showToast('Invoice generated successfully!');
         } catch (error) {
             showToast('Error generating invoice', 'error');
