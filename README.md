@@ -1,4 +1,4 @@
-# ⚡ Swift Invoice
+# Swift Invoice
 
 > **Create professional invoices in seconds** — A modern, full-stack MERN invoice generator with custom branding, PDF export, and payment QR codes.
 
