@@ -17,7 +17,7 @@ const Navbar = () => {
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-2 group">
                     <div className="bg-primary p-2 rounded-lg group-hover:rotate-12 transition-transform">
-                        <Zap className="w-5 h-5 text-black fill-black" />
+                        <Zap className="w-5 h-5 text-white fill-white" />
                     </div>
                     <span className="text-xl font-black tracking-tighter uppercase italic">Swift Invoice</span>
                 </Link>

@@ -62,7 +62,7 @@ const LandingPage = () => {
                                 whileHover={{ y: -5 }}
                                 className="bg-white p-8 rounded-3xl border border-zinc-100 shadow-sm transition-all hover:shadow-xl hover:border-primary/20"
                             >
-                                <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mb-6 text-black">
+                                <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center mb-6 text-white">
                                     {React.cloneElement(feature.icon, { size: 24 })}
                                 </div>
                                 <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
@@ -95,7 +95,7 @@ const LandingPage = () => {
                                 "Swift Invoice saved me hours every week. I can now create professional invoices in seconds and get paid faster. Absolutely love it!"
                             </p>
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-black">
+                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-white">
                                     SM
                                 </div>
                                 <div>
@@ -118,7 +118,7 @@ const LandingPage = () => {
                                 "The QR code payment feature is a game-changer. My clients can pay instantly, and I don't have to chase payments anymore."
                             </p>
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-black">
+                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-white">
                                     RP
                                 </div>
                                 <div>
@@ -141,7 +141,7 @@ const LandingPage = () => {
                                 "Clean, simple, and exactly what I needed. No bloated features, just beautiful invoices that make my business look professional."
                             </p>
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-black">
+                                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center font-black text-white">
                                     EJ
                                 </div>
                                 <div>
@@ -175,7 +175,7 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
                     <div className="flex items-center gap-2">
                         <div className="bg-primary p-1.5 rounded-lg">
-                            <Zap className="w-4 h-4 text-black fill-black" />
+                            <Zap className="w-4 h-4 text-white fill-white" />
                         </div>
                         <span className="text-lg font-black tracking-tighter uppercase italic">Swift Invoice</span>
                     </div>

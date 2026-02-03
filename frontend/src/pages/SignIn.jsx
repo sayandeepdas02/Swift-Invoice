@@ -32,7 +32,7 @@ const SignIn = () => {
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Or{' '}
-                        <Link to="/signup" className="font-medium text-emerald-600 hover:text-emerald-500">
+                        <Link to="/signup" className="font-medium text-primary hover:text-primary-dark">
                             create a new account
                         </Link>
                     </p>
@@ -45,7 +45,7 @@ const SignIn = () => {
                                 name="email"
                                 type="email"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                                 placeholder="Email address"
                                 value={formData.email}
                                 onChange={handleChange}
@@ -57,7 +57,7 @@ const SignIn = () => {
                                 name="password"
                                 type="password"
                                 required
-                                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 focus:z-10 sm:text-sm"
+                                className="appearance-none rounded-none relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                                 placeholder="Password"
                                 value={formData.password}
                                 onChange={handleChange}
@@ -68,7 +68,7 @@ const SignIn = () => {
                     <div>
                         <button
                             type="submit"
-                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200"
+                            className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors duration-200"
                         >
                             Sign in
                             <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
