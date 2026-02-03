@@ -16,7 +16,7 @@ export default {
                 muted: '#6B7280',
             },
             fontFamily: {
-                sans: ['Georgia', 'serif'],
+                sans: ['Inter', 'system-ui', 'sans-serif'],
             },
             borderRadius: {
                 'xl': '1rem',

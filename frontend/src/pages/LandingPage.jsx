@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Zap, FileText, Upload, Calculator, QrCode, Globe, ArrowRight } from 'lucide-react';
+import { Zap, FileText, Upload, Calculator, QrCode, Globe, ArrowRight, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const LandingPage = () => {
@@ -69,6 +69,52 @@ const LandingPage = () => {
                                 <p className="text-zinc-500 text-sm leading-relaxed">{feature.desc}</p>
                             </motion.div>
                         ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Pricing Section */}
+            <section id="pricing" className="py-32">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="text-center mb-20">
+                        <h2 className="text-4xl font-black tracking-tight mb-4">Simple Pricing</h2>
+                        <p className="text-zinc-500">No credit card required. Free forever.</p>
+                    </div>
+
+                    <div className="max-w-md mx-auto">
+                        <motion.div
+                            whileHover={{ y: -5 }}
+                            className="bg-white p-10 rounded-[2.5rem] border border-zinc-200 shadow-xl relative overflow-hidden"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-2 bg-primary" />
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-black mb-2">Free</h3>
+                                <div className="text-5xl font-black tracking-tighter mb-2">$0</div>
+                                <p className="text-zinc-400 text-sm">Forever. For everyone.</p>
+                            </div>
+
+                            <ul className="space-y-4 mb-10">
+                                {[
+                                    "Unlimited Invoices",
+                                    "Unlimited Clients",
+                                    "PDF Exports",
+                                    "Custom Branding",
+                                    "Multi-currency Support",
+                                    "Payment QR Codes"
+                                ].map((feature, i) => (
+                                    <li key={i} className="flex items-center gap-3 text-zinc-600 font-medium">
+                                        <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                                            <Check className="w-3.5 h-3.5 text-primary-dark" />
+                                        </div>
+                                        {feature}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <Link to="/signup" className="btn-primary w-full block text-center py-4 text-lg">
+                                Get Started for Free
+                            </Link>
+                        </motion.div>
                     </div>
                 </div>
             </section>

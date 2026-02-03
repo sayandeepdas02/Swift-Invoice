@@ -7,7 +7,7 @@
   --color-accent: #F3F4F6;
   --color-muted: #6B7280;
 
-  --font-sans: "Georgia", "serif";
+  --font-sans: "Inter", "system-ui", "sans-serif";
 
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
