@@ -25,6 +25,18 @@ const Dashboard = () => {
     const [logoPreview, setLogoPreview] = useState('');
     const [qrPreview, setQrPreview] = useState('');
 
+    const currencies = [
+        { code: 'USD', symbol: '$', name: 'US Dollar' },
+        { code: 'EUR', symbol: '€', name: 'Euro' },
+        { code: 'GBP', symbol: '£', name: 'British Pound' },
+        { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+        { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+        { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+        { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+    ];
+
+    const currencySymbol = currencies.find(c => c.code === invoice.currency)?.symbol || '$';
+
     // File upload handler for logo
     const handleLogoUpload = (e) => {
         const file = e.target.files[0];
@@ -314,7 +326,7 @@ const Dashboard = () => {
                                         />
                                     </div>
                                     <div className="w-32 shrink-0 text-right pr-4 font-bold text-lg">
-                                        ${(item.quantity * item.rate).toFixed(2)}
+                                        {currencySymbol}{(item.quantity * item.rate).toFixed(2)}
                                     </div>
                                     <button
                                         onClick={() => removeItem(index)}
@@ -391,7 +403,7 @@ const Dashboard = () => {
                         <div className="bg-zinc-50/50 p-8 rounded-[2rem] space-y-4">
                             <div className="flex justify-between text-zinc-500 font-medium">
                                 <span>Subtotal</span>
-                                <span>${subtotal.toFixed(2)}</span>
+                                <span>{currencySymbol}{subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-zinc-500 font-medium pb-4 border-b border-zinc-200">
                                 <div className="flex items-center gap-2">
@@ -404,11 +416,11 @@ const Dashboard = () => {
                                     />
                                     <span>%</span>
                                 </div>
-                                <span>${taxAmount.toFixed(2)}</span>
+                                <span>{currencySymbol}{taxAmount.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-2xl font-black pt-2">
                                 <span>Total Amount</span>
-                                <span className="text-secondary tracking-tighter">${totalAmount.toFixed(2)}</span>
+                                <span className="text-secondary tracking-tighter">{currencySymbol}{totalAmount.toFixed(2)}</span>
                             </div>
                             <div className="pt-6">
                                 <select
@@ -416,10 +428,11 @@ const Dashboard = () => {
                                     value={invoice.currency}
                                     onChange={(e) => setInvoice({ ...invoice, currency: e.target.value })}
                                 >
-                                    <option value="USD">USD - US Dollar</option>
-                                    <option value="EUR">EUR - Euro</option>
-                                    <option value="INR">INR - Indian Rupee</option>
-                                    <option value="GBP">GBP - British Pound</option>
+                                    {currencies.map(currency => (
+                                        <option key={currency.code} value={currency.code}>
+                                            {currency.code} - {currency.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         </div>
