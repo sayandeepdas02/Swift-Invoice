@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #CCFF00;
-  --color-primary-soft: rgba(204, 255, 0, 0.1);
+  --color-primary: #550015;
+  --color-primary-soft: rgba(85, 0, 21, 0.1);
   --color-secondary: #000000;
   --color-accent: #F3F4F6;
   --color-muted: #6B7280;
 
-  --font-sans: "Inter", "system-ui", "sans-serif";
+  --font-sans: "Georgia", "serif";
 
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;

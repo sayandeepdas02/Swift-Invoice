@@ -8,15 +8,15 @@ export default {
         extend: {
             colors: {
                 primary: {
-                    DEFAULT: '#CCFF00', // Neon/Lime Green from logo background
-                    dark: '#B8E600',
+                    DEFAULT: '#550015', // Maroon
+                    dark: '#3B000F',
                 },
                 secondary: '#000000',
                 accent: '#F3F4F6',
                 muted: '#6B7280',
             },
             fontFamily: {
-                sans: ['Inter', 'system-ui', 'sans-serif'],
+                sans: ['Georgia', 'serif'],
             },
             borderRadius: {
                 'xl': '1rem',
