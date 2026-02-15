@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Download, Check, Save, Zap, AlertCircle, Upload, Image } from 'lucide-react';
-import axios from 'axios';
+import { Plus, Trash2, Download, Check, Save, Zap, AlertCircle, Upload, Image, ArrowLeft } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import api from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
     const [invoice, setInvoice] = useState({
@@ -24,6 +26,11 @@ const Dashboard = () => {
     const [toast, setToast] = useState(null);
     const [logoPreview, setLogoPreview] = useState('');
     const [qrPreview, setQrPreview] = useState('');
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const invoiceId = searchParams.get('edit');
+    const isEditMode = !!invoiceId;
 
     const currencies = [
         { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -35,7 +42,38 @@ const Dashboard = () => {
         { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
     ];
 
-    const currencySymbol = currencies.find(c => c.code === invoice.currency)?.symbol || '$';
+    const currencySymbol = currencies.find(c => c.code === invoice.currency)?.symbol || invoice.currency;
+
+    // Load invoice for editing or pre-fill sender details
+    useEffect(() => {
+        if (invoiceId) {
+            fetchInvoice(invoiceId);
+        } else if (user?.businessDetails) {
+            setInvoice(prev => ({
+                ...prev,
+                sender: {
+                    name: user.businessDetails.name || '',
+                    email: user.businessDetails.email || '',
+                    address: user.businessDetails.address || '',
+                    logo: user.businessDetails.logo || '',
+                    companyName: user.businessDetails.companyName || ''
+                }
+            }));
+            if (user.businessDetails.logo) setLogoPreview(user.businessDetails.logo);
+        }
+    }, [invoiceId, user]);
+
+    const fetchInvoice = async (id) => {
+        try {
+            const { data } = await api.get(`/invoices/${id}`);
+            setInvoice(data);
+            if (data.sender.logo) setLogoPreview(data.sender.logo);
+            if (data.qrCodeImage) setQrPreview(data.qrCodeImage);
+        } catch (error) {
+            showToast('Error fetching invoice details', 'error');
+            navigate('/dashboard');
+        }
+    };
 
     // File upload handler for logo
     const handleLogoUpload = (e) => {
@@ -106,26 +144,42 @@ const Dashboard = () => {
         setTimeout(() => setToast(null), 3000);
     };
 
-    const generatePDF = async () => {
-        if (!invoice.client.name || !invoice.sender.name) {
+    const saveInvoice = async (isDraft = false) => {
+        if (!isDraft && (!invoice.client.name || !invoice.sender.name)) {
             showToast('Please fill in sender and client names', 'error');
-            return;
+            return null;
         }
 
         setIsGenerating(true);
         try {
-            const response = await axios.post('http://localhost:5001/api/invoices', {
-                ...invoice,
-                subtotal,
-                taxAmount,
-                totalAmount
-            });
+            const payload = { ...invoice, subtotal, taxAmount, totalAmount, isDraft };
+            let response;
 
-            const invoiceId = response.data._id;
+            if (isEditMode) {
+                response = await api.put(`/invoices/${invoice._id}`, payload);
+                showToast('Invoice updated successfully!');
+            } else {
+                response = await api.post('/invoices', payload);
+                if (isDraft) showToast('Draft saved successfully!');
+            }
 
+            return response.data;
+        } catch (error) {
+            showToast(error.response?.data?.message || 'Error saving invoice', 'error');
+            return null;
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const generatePDF = async () => {
+        const savedInvoice = await saveInvoice(false);
+        if (!savedInvoice) return;
+
+        setIsGenerating(true);
+        try {
             // Trigger download
-            // Download PDF
-            const pdfResponse = await axios.get(`http://localhost:5001/api/invoices/${invoiceId}/download`, {
+            const pdfResponse = await api.get(`/invoices/${savedInvoice._id}/download`, {
                 responseType: 'blob'
             });
 
@@ -138,7 +192,8 @@ const Dashboard = () => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-            showToast('Invoice generated successfully!');
+            showToast('Invoice downloaded successfully!');
+            if (!isEditMode) navigate('/invoices'); // Redirect to history after create & download
         } catch (error) {
             showToast('Error generating invoice', 'error');
             console.error(error);
@@ -152,16 +207,34 @@ const Dashboard = () => {
             <div className="max-w-5xl mx-auto px-6">
                 <div className="flex justify-between items-end mb-12">
                     <div>
-                        <h1 className="text-4xl font-black tracking-tight mb-2 italic uppercase">Invoice Builder</h1>
-                        <p className="text-zinc-500">Create professional invoices in seconds.</p>
+                        <div className="flex items-center gap-4 mb-2">
+                            {isEditMode && (
+                                <button onClick={() => navigate('/invoices')} className="p-2 hover:bg-zinc-100 rounded-full transition-colors">
+                                    <ArrowLeft className="w-6 h-6" />
+                                </button>
+                            )}
+                            <h1 className="text-4xl font-black tracking-tight italic uppercase">
+                                {isEditMode ? 'Edit Invoice' : 'Invoice Builder'}
+                            </h1>
+                        </div>
+                        <p className="text-zinc-500">{isEditMode ? 'Update your invoice details below.' : 'Create professional invoices in seconds.'}</p>
                     </div>
-                    <button
-                        onClick={generatePDF}
-                        disabled={isGenerating}
-                        className="btn-primary flex items-center gap-2 px-8 py-4 shadow-xl shadow-primary-soft"
-                    >
-                        {isGenerating ? 'Generating...' : <><Download className="w-5 h-5" /> Download Invoice</>}
-                    </button>
+                    <div className="flex gap-4">
+                        <button
+                            onClick={() => saveInvoice(true)}
+                            disabled={isGenerating}
+                            className="flex items-center gap-2 px-6 py-4 font-bold text-zinc-500 hover:text-black hover:bg-zinc-100 rounded-xl transition-all"
+                        >
+                            <Save className="w-5 h-5" /> Save Draft
+                        </button>
+                        <button
+                            onClick={generatePDF}
+                            disabled={isGenerating}
+                            className="btn-primary flex items-center gap-2 px-8 py-4 shadow-xl shadow-primary-soft"
+                        >
+                            {isGenerating ? 'Processing...' : <><Download className="w-5 h-5" /> {isEditMode ? 'Update & Download' : 'Download Invoice'}</>}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="bg-white border border-zinc-200 rounded-[2.5rem] shadow-sm overflow-hidden p-10 md:p-16">
@@ -310,6 +383,7 @@ const Dashboard = () => {
                                     <div className="w-24 shrink-0">
                                         <input
                                             type="number"
+                                            min="1"
                                             placeholder="Qty"
                                             className="input-field text-center"
                                             value={item.quantity}
@@ -319,6 +393,8 @@ const Dashboard = () => {
                                     <div className="w-32 shrink-0">
                                         <input
                                             type="number"
+                                            min="0"
+                                            step="0.01"
                                             placeholder="Rate"
                                             className="input-field text-right"
                                             value={item.rate}
@@ -407,7 +483,13 @@ const Dashboard = () => {
                             </div>
                             <div className="flex justify-between items-center text-zinc-500 font-medium pb-4 border-b border-zinc-200">
                                 <div className="flex items-center gap-2">
-                                    <span>Tax</span>
+                                    <input
+                                        type="text"
+                                        className="w-16 bg-transparent border-none p-0 focus:ring-0 text-right font-medium placeholder:text-zinc-300"
+                                        value={invoice.taxName}
+                                        onChange={(e) => setInvoice({ ...invoice, taxName: e.target.value })}
+                                        placeholder="Tax"
+                                    />
                                     <input
                                         type="number"
                                         className="w-12 bg-transparent border-none p-0 focus:ring-0 font-bold text-center underline decoration-primary decoration-2 underline-offset-4"
@@ -417,6 +499,18 @@ const Dashboard = () => {
                                     <span>%</span>
                                 </div>
                                 <span>{currencySymbol}{taxAmount.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-zinc-500 font-medium pb-4 border-b border-zinc-200">
+                                <span>Discount</span>
+                                <div className="flex items-center gap-1">
+                                    <span>- {currencySymbol}</span>
+                                    <input
+                                        type="number"
+                                        className="w-20 bg-transparent border-none p-0 focus:ring-0 font-bold text-right underline decoration-zinc-300 decoration-2 underline-offset-4"
+                                        value={invoice.discount}
+                                        onChange={(e) => setInvoice({ ...invoice, discount: Number(e.target.value) })}
+                                    />
+                                </div>
                             </div>
                             <div className="flex justify-between items-center text-2xl font-black pt-2">
                                 <span>Total Amount</span>

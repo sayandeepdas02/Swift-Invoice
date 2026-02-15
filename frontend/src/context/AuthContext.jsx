@@ -6,11 +6,7 @@ const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
 
-// Create axios instance with default config
-const api = axios.create({
-    baseURL: 'http://localhost:5001/api',
-    withCredentials: true
-});
+import api from '../lib/api';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);

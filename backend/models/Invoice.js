@@ -16,6 +16,10 @@ const invoiceSchema = new mongoose.Schema({
         enum: ['pending', 'paid', 'cancelled'],
         default: 'pending'
     },
+    isDraft: {
+        type: Boolean,
+        default: false
+    },
 
     // Sender Details (Pay To)
     sender: {

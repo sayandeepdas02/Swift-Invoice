@@ -2,8 +2,50 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Zap, FileText, Upload, Calculator, QrCode, Globe, ArrowRight, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import api from '../lib/api';
+import toast from 'react-hot-toast';
 
 const LandingPage = () => {
+    const handleSampleInvoice = async () => {
+        const toastId = toast.loading('Generating sample...');
+        try {
+            const sampleData = {
+                invoiceNumber: 'SAMPLE-001',
+                sender: { name: 'Acme Corp', address: '123 Business Rd', email: 'contact@acme.com' },
+                client: { name: 'John Doe', address: '456 Client St', email: 'john@example.com' },
+                items: [{ description: 'Web Development Services', quantity: 1, rate: 500, amount: 500 }],
+                subtotal: 500,
+                taxPercentage: 10,
+                taxAmount: 50,
+                totalAmount: 550,
+                currency: 'USD',
+                date: new Date().toISOString(),
+                dueDate: new Date(Date.now() + 86400000 * 7).toISOString(),
+                isDraft: false
+            };
+
+            const response = await api.post('/invoices', sampleData);
+            const invoiceId = response.data._id;
+
+            const pdfResponse = await api.get(`/invoices/${invoiceId}/download`, {
+                responseType: 'blob'
+            });
+
+            const url = window.URL.createObjectURL(new Blob([pdfResponse.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'INV-SAMPLE.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Sample invoice downloaded!', { id: toastId });
+        } catch (error) {
+            console.error(error);
+            toast.error('Failed to generate sample', { id: toastId });
+        }
+    };
+
     const features = [
         { icon: <Zap />, title: "Instant Generation", desc: "Create professional invoices in under 60 seconds." },
         { icon: <FileText />, title: "PDF Export", desc: "Clean, print-ready PDF invoices for your clients." },
@@ -36,7 +78,10 @@ const LandingPage = () => {
                             <Link to="/dashboard" className="btn-secondary px-10 py-4 text-lg flex items-center gap-2">
                                 Generate Invoice <ArrowRight className="w-5 h-5" />
                             </Link>
-                            <button className="px-8 py-4 text-zinc-600 font-semibold hover:text-black transition-colors">
+                            <button
+                                onClick={handleSampleInvoice}
+                                className="px-8 py-4 text-zinc-600 font-semibold hover:text-black transition-colors"
+                            >
                                 View Sample Invoice
                             </button>
                         </div>
@@ -229,9 +274,9 @@ const LandingPage = () => {
                         © 2026 Swift Invoice. All rights reserved.
                     </div>
                     <div className="flex gap-6 text-sm font-medium text-zinc-500">
-                        <a href="#" className="hover:text-black">Twitter</a>
-                        <a href="#" className="hover:text-black">Privacy</a>
-                        <a href="#" className="hover:text-black">Terms</a>
+                        <a href="https://twitter.com" className="hover:text-black">Twitter</a>
+                        <a href="/privacy" className="hover:text-black">Privacy</a>
+                        <a href="/terms" className="hover:text-black">Terms</a>
                     </div>
                 </div>
             </footer>

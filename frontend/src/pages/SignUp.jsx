@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { User, Mail, Lock, Phone, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const SignUp = () => {
     const [formData, setFormData] = useState({
@@ -21,8 +22,7 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
-            // Toast would handle this if added to context or here, but simple alert for now if context doesn't handle validation
-            // Actually context handles API errors, but client side validation is good
+            toast.error('Passwords do not match');
             return;
         }
 

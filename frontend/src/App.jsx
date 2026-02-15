@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import { AuthProvider } from './context/AuthContext';
+import InvoiceHistory from './pages/InvoiceHistory';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -25,6 +26,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/invoices"
+              element={
+                <ProtectedRoute>
+                  <InvoiceHistory />
                 </ProtectedRoute>
               }
             />

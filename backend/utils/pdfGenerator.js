@@ -1,6 +1,12 @@
 import htmlPdf from 'html-pdf-node';
 
 export const generateInvoicePDF = async (invoiceData) => {
+
+  const currencySymbols = {
+    'USD': '$', 'EUR': '€', 'GBP': '£', 'INR': '₹', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$'
+  };
+  const symbol = currencySymbols[invoiceData.currency] || invoiceData.currency;
+
   // HTML Template for the Invoice
   const htmlContent = `
     <!DOCTYPE html>
@@ -70,8 +76,8 @@ export const generateInvoicePDF = async (invoiceData) => {
             <tr>
               <td>${item.description}</td>
               <td style="text-align: center;">${item.quantity}</td>
-              <td style="text-align: right;">${Number(item.rate).toFixed(2)}</td>
-              <td style="text-align: right;">${Number(item.amount).toFixed(2)}</td>
+              <td style="text-align: right;">${symbol}${Number(item.rate).toFixed(2)}</td>
+              <td style="text-align: right;">${symbol}${Number(item.amount).toFixed(2)}</td>
             </tr>
           `).join('')}
         </tbody>
@@ -80,17 +86,23 @@ export const generateInvoicePDF = async (invoiceData) => {
       <div class="totals">
         <div class="total-row">
           <span>Subtotal</span>
-          <span>${Number(invoiceData.subtotal).toFixed(2)}</span>
+          <span>${symbol}${Number(invoiceData.subtotal).toFixed(2)}</span>
         </div>
         ${invoiceData.taxPercentage > 0 ? `
           <div class="total-row">
             <span>${invoiceData.taxName || 'Tax'} (${invoiceData.taxPercentage}%)</span>
-            <span>${Number(invoiceData.taxAmount).toFixed(2)}</span>
+            <span>${symbol}${Number(invoiceData.taxAmount).toFixed(2)}</span>
+          </div>
+        ` : ''}
+        ${invoiceData.discount > 0 ? `
+          <div class="total-row">
+            <span>Discount</span>
+            <span>-${symbol}${Number(invoiceData.discount).toFixed(2)}</span>
           </div>
         ` : ''}
         <div class="total-row grand-total">
           <span>Grand Total</span>
-          <span>${invoiceData.currency} ${Number(invoiceData.totalAmount).toFixed(2)}</span>
+          <span>${symbol}${Number(invoiceData.totalAmount).toFixed(2)}</span>
         </div>
       </div>
 
