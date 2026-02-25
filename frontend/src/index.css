@@ -46,4 +46,230 @@
   .card {
     @apply bg-white border border-zinc-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow;
   }
+
+  /* ── Split-screen layout ──────────────────────────────────── */
+  .split-layout {
+    @apply max-w-[1600px] mx-auto flex gap-8 items-start;
+  }
+
+  .split-left {
+    /* Left form panel — scrolls naturally with page */
+    @apply w-full lg:w-1/2 xl:w-[55%];
+  }
+
+  .split-right {
+    /* Right preview pane — sticky on desktop */
+    @apply w-full lg:w-1/2 xl:w-[45%] hidden lg:flex;
+  }
+
+  .invoice-form-panel {
+    @apply w-full;
+  }
+
+  /* ── Preview sticky wrapper ───────────────────────────────── */
+  .preview-sticky-wrapper {
+    @apply w-full sticky top-24 flex flex-col;
+    max-height: calc(100vh - 7rem);
+  }
+
+  /* Live preview badge */
+  .preview-label {
+    @apply flex items-center gap-2 text-[10px] uppercase tracking-widest font-black text-zinc-400 mb-3 px-1;
+  }
+
+  .preview-label-dot {
+    @apply inline-block w-1.5 h-1.5 rounded-full bg-green-400;
+    box-shadow: 0 0 0 3px rgba(134, 239, 172, 0.4);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+
+    0%,
+    100% {
+      box-shadow: 0 0 0 3px rgba(134, 239, 172, 0.4);
+    }
+
+    50% {
+      box-shadow: 0 0 0 5px rgba(134, 239, 172, 0.2);
+    }
+  }
+
+  /* ── Preview toolbar ──────────────────────────────────────── */
+  .preview-toolbar {
+    @apply flex items-center justify-between px-3 py-2 bg-white border border-zinc-200 rounded-2xl mb-3 shadow-sm;
+  }
+
+  .preview-zoom-select-wrapper {
+    @apply flex items-center gap-1.5 relative;
+  }
+
+  .preview-zoom-select {
+    @apply appearance-none bg-transparent text-xs font-bold text-zinc-600 border-none pl-0 pr-5 py-1 focus:ring-0 cursor-pointer;
+  }
+
+  .preview-icon-btn {
+    @apply p-2 rounded-xl text-zinc-500 hover:text-black hover:bg-zinc-100 transition-colors;
+  }
+
+  .preview-download-btn {
+    @apply flex items-center gap-1.5 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl hover:bg-zinc-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed;
+  }
+
+  /* ── A4 Canvas scroll area ────────────────────────────────── */
+  .preview-scroll-area {
+    @apply flex-1 overflow-y-auto rounded-2xl bg-zinc-100 p-6;
+    /* Inset shadow gives the sense of a framed viewport */
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Zoom wrapper: only the contained A4 card is scaled */
+  .preview-zoom-wrapper {
+    @apply flex justify-center;
+    transition: transform 0.2s ease;
+  }
+
+  /* The A4 card itself — 794px = 210mm at 96dpi */
+  .a4-canvas {
+    width: 794px;
+    min-height: 1123px;
+    @apply bg-white rounded-xl overflow-hidden flex-shrink-0;
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.05),
+      0 10px 40px -10px rgba(0, 0, 0, 0.16),
+      0 0 0 1px rgba(0, 0, 0, 0.04);
+  }
+
+  /* ── View toggle ──────────────────────────────────────────── */
+  .view-toggle-btn {
+    @apply flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-zinc-500 hover:text-zinc-800 transition-all;
+  }
+
+  .view-toggle-active {
+    @apply bg-white text-black shadow-sm;
+  }
+
+  /* ── Kanban board ─────────────────────────────────────────── */
+  .kanban-board {
+    @apply flex gap-5 overflow-x-auto pb-6;
+    /* Give each column room; board scrolls horizontally on narrow screens */
+    min-height: calc(100vh - 300px);
+  }
+
+  .kanban-col {
+    @apply flex flex-col flex-shrink-0 rounded-[1.5rem] bg-zinc-100/70 border border-zinc-200/60;
+    width: 260px;
+    min-height: 480px;
+  }
+
+  .kanban-col-readonly {
+    @apply opacity-90;
+  }
+
+  .kanban-col-header {
+    @apply flex items-center justify-between px-4 py-3 border-b border-zinc-200/60;
+  }
+
+  .kanban-col-body {
+    @apply flex flex-col gap-2.5 p-3 flex-1;
+  }
+
+  .kanban-empty-slot {
+    @apply flex items-center justify-center h-16 rounded-xl border-2 border-dashed border-zinc-300/60 text-xs font-semibold text-zinc-300;
+  }
+
+  .kanban-card {
+    @apply bg-white rounded-2xl p-4 border border-zinc-100 cursor-pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .kanban-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.10), 0 2px 4px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
+  }
+
+  /* ── Overdue badge ────────────────────────────────────────── */
+  .badge-overdue {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-red-100 text-red-600;
+  }
+
+  /* ── Invoice Drawer ───────────────────────────────────────── */
+  .drawer-overlay {
+    @apply fixed inset-0 z-50 bg-black/40 backdrop-blur-sm;
+  }
+
+  .invoice-drawer {
+    @apply fixed top-0 right-0 h-full bg-white flex flex-col z-50 shadow-2xl;
+    width: 100%;
+  }
+
+  @media (min-width: 768px) {
+    .invoice-drawer {
+      width: 420px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .invoice-drawer {
+      width: 460px;
+    }
+  }
+
+  .drawer-header {
+    @apply flex items-start justify-between gap-4 px-6 py-5 border-b border-zinc-100 flex-shrink-0;
+  }
+
+  .drawer-body {
+    @apply flex-1 overflow-y-auto px-6 py-5 space-y-5;
+  }
+
+  .drawer-footer {
+    @apply flex flex-wrap gap-2 px-6 py-4 border-t border-zinc-100 bg-zinc-50/60 flex-shrink-0;
+  }
+
+  .drawer-amount-block {
+    @apply bg-zinc-50 rounded-2xl px-5 py-4;
+  }
+
+  .drawer-section {
+    @apply border-t border-zinc-100 pt-4;
+  }
+
+  .drawer-section-title {
+    @apply flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-2;
+  }
+
+  .drawer-label {
+    @apply text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-0.5;
+  }
+
+  .drawer-value {
+    @apply text-sm font-semibold text-zinc-700;
+  }
+
+  .drawer-action-btn {
+    @apply flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-zinc-100 text-zinc-700 hover:bg-zinc-200 transition-colors;
+  }
+
+  .drawer-action-success {
+    @apply bg-emerald-100 text-emerald-700 hover:bg-emerald-200;
+  }
+
+  .drawer-action-danger {
+    @apply bg-red-50 text-red-600 hover:bg-red-100;
+  }
+
+  /* ── Table view ───────────────────────────────────────────── */
+  .table-th {
+    @apply px-5 py-3.5 text-left text-[10px] font-black uppercase tracking-widest text-zinc-400;
+  }
+
+  .table-td {
+    @apply px-5 py-3.5 text-sm border-b border-zinc-50;
+  }
+
+  .table-row {
+    @apply cursor-pointer hover:bg-zinc-50/80 transition-colors;
+  }
 }
