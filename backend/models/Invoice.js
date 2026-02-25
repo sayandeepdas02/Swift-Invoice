@@ -13,8 +13,8 @@ const invoiceSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'paid', 'cancelled'],
-        default: 'pending'
+        enum: ['draft', 'sent', 'viewed', 'awaiting_payment', 'paid', 'pending', 'cancelled'], // legacy pending/cancelled kept for backward compat
+        default: 'draft'
     },
     isDraft: {
         type: Boolean,
@@ -26,8 +26,8 @@ const invoiceSchema = new mongoose.Schema({
         name: { type: String, required: true },
         email: { type: String, required: true },
         address: String,
-        logo: String, // URL from Cloudinary or uploaded image
-        companyName: String, // Custom company name to display
+        logo: String,
+        companyName: String,
     },
 
     // Client Details (Billed To)
@@ -54,20 +54,30 @@ const invoiceSchema = new mongoose.Schema({
     totalAmount: { type: Number, required: true },
     currency: { type: String, default: 'USD' },
 
-    // Metadata
+    // Dates
     issueDate: { type: Date, default: Date.now },
     dueDate: { type: Date },
     paymentTerms: String,
     notes: String,
 
+    // Lifecycle timestamps (null = not yet reached that state)
+    sentAt: { type: Date, default: null },
+    viewedAt: { type: Date, default: null },
+    paidAt: { type: Date, default: null },
+
     // Payment QR
-    paymentQr: String, // UPI ID text to display in invoice
-    qrImageUrl: String, // Auto-generated QR (deprecated, keeping for backward compatibility)
-    qrCodeImage: String, // User-uploaded QR code image URL
+    paymentQr: String,
+    qrImageUrl: String,
+    qrCodeImage: String,
 
 }, {
     timestamps: true
 });
+
+// ── Indexes for performance ──────────────────────────────────────
+invoiceSchema.index({ userId: 1, updatedAt: -1 });
+invoiceSchema.index({ userId: 1, status: 1 });
+invoiceSchema.index({ userId: 1, dueDate: 1 });
 
 const Invoice = mongoose.model('Invoice', invoiceSchema);
 
