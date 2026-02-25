@@ -33,10 +33,11 @@ export const register = async (req, res) => {
 
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV !== 'development', // Use secure cookies in production
-                sameSite: 'strict',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
                 maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
+
 
             res.status(201).json({
                 _id: user._id,
@@ -64,10 +65,11 @@ export const login = async (req, res) => {
 
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV !== 'development',
-                sameSite: 'strict',
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
                 maxAge: 30 * 24 * 60 * 60 * 1000
             });
+
 
             res.json({
                 _id: user._id,
