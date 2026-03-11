@@ -33,8 +33,8 @@ export const register = async (req, res) => {
 
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                secure: true, // Always secure for cross-site cookies
+                sameSite: 'none', // Required for cross-site cookies (Vercel Frontend -> Render Backend)
                 maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
             });
 
@@ -65,8 +65,8 @@ export const login = async (req, res) => {
 
             res.cookie('jwt', token, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+                secure: true, // Always secure for cross-site cookies
+                sameSite: 'none', // Required for cross-site cookies (Vercel Frontend -> Render Backend)
                 maxAge: 30 * 24 * 60 * 60 * 1000
             });
 
