@@ -6,7 +6,7 @@ import Button from "./Button";
 export function AnimatedHero() {
   const [titleNumber, setTitleNumber] = useState(0);
   const titles = useMemo(
-    () => ["Freelance", "Founders", "Builders"],
+    () => ["Freelancers", "Founders", "Builders"],
     []
   );
 
@@ -48,15 +48,15 @@ export function AnimatedHero() {
 
           {/* H1 Titles */}
           <div className="flex flex-col items-center justify-center w-full text-center mt-16">
-            <h1 className="text-5xl md:text-[68px] font-bold tracking-tight text-white mb-2 leading-[1.1] md:leading-[1.15]">
+            <h1 className="text-5xl md:text-[56px] font-bold tracking-tight text-white mb-2 leading-[1.1] md:leading-[1.15]">
               Simple, Commercial-Quality<br />
-              <div className="flex flex-col md:flex-row items-center justify-center gap-0 md:gap-4 mt-1">
+              <div className="flex flex-col md:flex-row items-center justify-center gap-0 md:gap-1 mt-1">
                 <span>Invoicing for</span>
-                <span className="relative flex w-[300px] md:w-[350px] justify-center overflow-hidden h-[1.25em]">
+                <span className="relative flex w-[280px] md:w-[320px] justify-center overflow-hidden h-[1.25em]">
                   <AnimatePresence mode="wait">
                     <motion.span
                       key={titleNumber}
-                      className="absolute text-white block font-bold"
+                      className="absolute text-white block font-semibold italic"
                       initial={{ opacity: 0, y: 30 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -30 }}
