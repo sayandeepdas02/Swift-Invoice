@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Zap, LogOut, Menu, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import Button from './ui/Button';
+import LogoIcon from './ui/LogoIcon';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -14,84 +16,95 @@ const Navbar = () => {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-zinc-100">
-            <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                <Link to="/" className="flex items-center gap-2 group">
-                    <div className="bg-primary p-2 rounded-lg group-hover:rotate-12 transition-transform">
-                        <Zap className="w-5 h-5 text-white fill-white" />
-                    </div>
-                    <span className="text-xl font-black tracking-tighter uppercase italic">Swift Invoice</span>
-                </Link>
-
-                <div className="hidden md:flex items-center gap-8 text-sm font-medium text-zinc-600">
-                    <a href="#features" className="hover:text-black transition-colors">Features</a>
-                    <a href="#testimonials" className="hover:text-black transition-colors">Testimonials</a>
-                    <a href="#pricing" className="hover:text-black transition-colors">Pricing</a>
+        <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-150 bg-brand-base border-b border-white/20">
+            <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between relative">
+                
+                {/* Continuous Vertical Grid Lines */}
+                <div className="absolute inset-0 pointer-events-none hidden md:block">
+                  <div className="h-full border-l border-white/20 absolute left-0" />
+                  <div className="h-full border-l border-white/20 absolute right-0" />
                 </div>
 
-                <div className="flex items-center gap-4">
+                {/* 1. Logo */}
+                <Link to="/" className="flex items-center gap-2 group relative z-10">
+                    <LogoIcon className="w-6 h-6 text-white group-hover:text-rose-200 transition-colors" strokeWidth={6} />
+                    <span className="text-lg font-semibold tracking-tight text-white">Swift Invoice</span>
+                </Link>
+
+                {/* 2. Middle Links (Desktop) */}
+                <div className="hidden md:flex items-center justify-center gap-8 relative z-10">
+                    <a href="#product" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Product</a>
+                    <a href="#solutions" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Solutions</a>
+                    <a href="#testimonials" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Testimonials</a>
+                    <a href="#pricing" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Pricing</a>
+                </div>
+
+                {/* 3. Right Side */}
+                <div className="flex items-center gap-4 relative z-10">
                     {user ? (
                         <>
-                            <span className="text-sm font-medium text-zinc-600 hidden sm:block">
+                            <span className="text-sm font-medium text-white/80 hidden sm:block tracking-tight">
                                 {user.name}
                             </span>
-                            <Link to="/invoices" className="text-sm font-medium text-zinc-600 hover:text-black transition-colors hidden md:block">
-                                My Invoices
+                            <Link to="/invoices" className="text-sm font-medium text-white/80 hover:text-white transition-colors hidden md:block tracking-tight">
+                                History
                             </Link>
-                            <Link to="/dashboard" className="btn-primary py-2 px-4 text-sm hidden md:block">
-                                Dashboard
+                            <Link to="/dashboard" className="hidden md:block">
+                                <Button variant="secondary" size="sm" className="shadow-none bg-white text-brand-base border-0 hover:bg-slate-50 font-semibold px-5 tracking-tight">Dashboard</Button>
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="p-2 hover:bg-zinc-100 rounded-lg transition-colors hidden md:block"
+                                className="p-1.5 hover:bg-white/10 rounded text-white/80 hover:text-white transition-colors hidden md:block"
                                 title="Logout"
                             >
-                                <LogOut className="w-5 h-5 text-zinc-600" />
+                                <LogOut size={16} />
                             </button>
                         </>
                     ) : (
                         <div className="hidden md:flex items-center gap-4">
-                            <Link to="/signin" className="text-sm font-medium text-zinc-600 hover:text-black transition-colors">
-                                Sign In
-                            </Link>
-                            <Link to="/signup" className="btn-primary py-2.5 px-6 text-sm">
-                                Get Started
+                            <Link to="/signin">
+                                <Button variant="secondary" size="sm" className="shadow-none px-6 bg-white text-brand-base border-0 hover:bg-slate-50 font-semibold tracking-tight">Get Started</Button>
                             </Link>
                         </div>
                     )}
 
                     {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden p-2 text-zinc-600 hover:bg-zinc-100 rounded-lg"
+                        className="md:hidden p-1.5 text-white/80 hover:bg-white/10 rounded"
                         onClick={() => setIsOpen(!isOpen)}
                     >
-                        {isOpen ? <X /> : <Menu />}
+                        {isOpen ? <X size={20} /> : <Menu size={20} />}
                     </button>
                 </div>
             </div>
 
             {/* Mobile Menu Overlay */}
             {isOpen && (
-                <div className="md:hidden fixed inset-0 top-20 bg-white z-40 p-6 flex flex-col gap-6 border-t border-zinc-100 animate-in slide-in-from-top-5">
+                <div className="md:hidden fixed inset-0 top-16 bg-brand-base z-40 p-6 flex flex-col gap-6 border-t border-rose-500/30 transition-all">
                     {user ? (
                         <>
-                            <div className="flex items-center gap-3 p-4 bg-zinc-50 rounded-xl">
-                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold">
+                            <div className="flex items-center gap-3 p-4 bg-white/10 rounded border border-white/10">
+                                <div className="w-8 h-8 bg-white text-brand-base rounded flex items-center justify-center font-semibold text-sm">
                                     {user.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <div className="font-bold">{user.name}</div>
-                                    <div className="text-xs text-zinc-500">{user.email}</div>
+                                    <div className="font-semibold text-white text-sm tracking-tight">{user.name}</div>
+                                    <div className="text-xs text-white/80 tracking-tight">{user.email}</div>
                                 </div>
                             </div>
-                            <Link to="/dashboard" onClick={() => setIsOpen(false)} className="text-lg font-medium p-2 border-b border-zinc-50">Dashboard</Link>
-                            <Link to="/invoices" onClick={() => setIsOpen(false)} className="text-lg font-medium p-2 border-b border-zinc-50">My Invoices</Link>
-                            <button onClick={handleLogout} className="text-lg font-medium p-2 text-left text-red-500">Sign Out</button>
+                            <Link to="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Dashboard</Link>
+                            <Link to="/invoices" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">History</Link>
+                            <button onClick={handleLogout} className="text-sm font-semibold p-3 text-left text-rose-200 hover:bg-white/10 rounded transition-colors tracking-tight">Sign Out</button>
                         </>
                     ) : (
                         <>
-                            <Link to="/signin" onClick={() => setIsOpen(false)} className="text-lg font-medium p-2 border-b border-zinc-50">Sign In</Link>
-                            <Link to="/signup" onClick={() => setIsOpen(false)} className="btn-primary py-3 text-center">Get Started</Link>
+                            <a href="#product" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Product</a>
+                            <a href="#solutions" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Solutions</a>
+                            <a href="#testimonials" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Testimonials</a>
+                            <a href="#pricing" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Pricing</a>
+                            <Link to="/signin" onClick={() => setIsOpen(false)} className="w-full mt-4">
+                                <Button variant="secondary" className="w-full bg-white text-brand-base font-semibold tracking-tight">Get Started</Button>
+                            </Link>
                         </>
                     )}
                 </div>

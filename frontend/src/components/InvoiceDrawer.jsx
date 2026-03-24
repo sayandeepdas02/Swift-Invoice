@@ -1,40 +1,35 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    X, Download, CheckCircle, Copy, Trash2, ExternalLink,
-    Calendar, Clock, AlertTriangle, Send, User, FileText,
-} from 'lucide-react';
+import { X, Download, CheckCircle, Copy, Trash2, ExternalLink, Calendar, Clock, AlertTriangle, Send, User, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../lib/api';
 import { toast } from 'react-hot-toast';
+import Button from './ui/Button';
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£', INR: '₹', AUD: 'A$', CAD: 'C$', SGD: 'S$' };
 const currSym = (code) => CURRENCIES[code] || code;
 
 const STATUS_STYLES = {
     draft: { label: 'Draft', cls: 'bg-slate-100 text-slate-600' },
-    sent: { label: 'Sent', cls: 'bg-blue-100 text-blue-600' },
-    viewed: { label: 'Viewed', cls: 'bg-purple-100 text-purple-600' },
-    awaiting_payment: { label: 'Awaiting Payment', cls: 'bg-orange-100 text-orange-600' },
-    paid: { label: 'Paid', cls: 'bg-emerald-100 text-emerald-700' },
-    pending: { label: 'Pending', cls: 'bg-amber-100 text-amber-700' },
-    cancelled: { label: 'Cancelled', cls: 'bg-red-100 text-red-600' },
+    sent: { label: 'Sent', cls: 'bg-blue-50 text-blue-600' },
+    viewed: { label: 'Viewed', cls: 'bg-purple-50 text-purple-600' },
+    awaiting_payment: { label: 'Awaiting Payment', cls: 'bg-orange-50 text-orange-600' },
+    paid: { label: 'Paid', cls: 'bg-emerald-50 text-emerald-700' },
+    pending: { label: 'Pending', cls: 'bg-amber-50 text-amber-700' },
+    cancelled: { label: 'Cancelled', cls: 'bg-red-50 text-red-600' },
 };
 
-const computeOverdue = (inv) =>
-    !inv.paidAt && inv.dueDate && new Date() > new Date(inv.dueDate);
+const computeOverdue = (inv) => !inv.paidAt && inv.dueDate && new Date() > new Date(inv.dueDate);
 
-const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate, onDownload }) => {
+const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate }) => {
     const drawerRef = useRef(null);
 
-    // Close on Escape key
     useEffect(() => {
         const handler = (e) => { if (e.key === 'Escape') onClose(); };
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
     }, [onClose]);
 
-    // Close on overlay click
     const handleOverlayClick = (e) => {
         if (drawerRef.current && !drawerRef.current.contains(e.target)) onClose();
     };
@@ -43,7 +38,7 @@ const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate, onDo
 
     const sym = currSym(invoice.currency);
     const isOverdue = computeOverdue(invoice);
-    const status = STATUS_STYLES[invoice.status] || { label: invoice.status, cls: 'bg-zinc-100 text-zinc-600' };
+    const status = STATUS_STYLES[invoice.status] || { label: invoice.status, cls: 'bg-slate-100 text-slate-600' };
 
     const handleMarkPaid = async () => {
         try {
@@ -96,181 +91,136 @@ const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate, onDo
 
     return (
         <AnimatePresence>
-            <div className="drawer-overlay" onClick={handleOverlayClick}>
+            <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex justify-end" onClick={handleOverlayClick}>
                 <motion.div
                     ref={drawerRef}
-                    className="invoice-drawer"
+                    className="h-full bg-bg-base flex flex-col z-50 shadow-2xl border-l border-border-base w-full md:w-[480px]"
                     initial={{ x: '100%' }}
                     animate={{ x: 0 }}
                     exit={{ x: '100%' }}
-                    transition={{ type: 'spring', damping: 28, stiffness: 280 }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 250 }}
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* ── Drawer Header ──────────────────────────── */}
-                    <div className="drawer-header">
+                    {/* Header */}
+                    <div className="flex items-center justify-between p-4 bg-white border-b border-border-base shrink-0">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+                                <span className="text-xs font-semibold text-text-primary uppercase tracking-widest">
                                     #{invoice.invoiceNumber}
                                 </span>
                                 {isOverdue && (
-                                    <span className="badge-overdue">
+                                    <span className="badge-overdue bg-red-50 text-red-500 border border-red-100 text-[9px] px-1 rounded">
                                         <AlertTriangle size={9} /> Overdue
                                     </span>
                                 )}
                             </div>
-                            <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full ${status.cls}`}>
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-0.5 rounded uppercase tracking-wider ${status.cls}`}>
                                 {status.label}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <a
-                                href={`/dashboard?edit=${invoice._id}`}
-                                className="p-2 rounded-xl text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors"
-                                title="Edit invoice"
-                            >
+                        <div className="flex items-center gap-1">
+                            <a href={`/dashboard?edit=${invoice._id}`} className="p-1.5 rounded text-slate-400 hover:text-text-primary hover:bg-slate-100 transition-colors" title="Edit invoice">
                                 <ExternalLink size={16} />
                             </a>
-                            <button onClick={onClose} className="p-2 rounded-xl text-zinc-400 hover:text-black hover:bg-zinc-100 transition-colors">
+                            <button onClick={onClose} className="p-1.5 rounded text-slate-400 hover:text-text-primary hover:bg-slate-100 transition-colors">
                                 <X size={18} />
                             </button>
                         </div>
                     </div>
 
-                    {/* ── Drawer Body (scrollable) ───────────────── */}
-                    <div className="drawer-body">
-                        {/* Amount Block */}
-                        <div className="drawer-amount-block">
-                            <p className="text-xs font-black text-zinc-400 uppercase tracking-widest mb-1">Total Amount</p>
-                            <p className="text-4xl font-black tracking-tight">
+                    {/* Body */}
+                    <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                        <div className="bg-white border border-border-base rounded p-4 shadow-sm">
+                            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">Total Amount</p>
+                            <p className="text-3xl font-semibold tracking-tight text-text-primary">
                                 {sym}{Number(invoice.totalAmount).toFixed(2)}
-                                <span className="text-sm font-bold text-zinc-400 ml-2">{invoice.currency}</span>
                             </p>
                         </div>
 
-                        {/* Dates row */}
-                        <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="grid grid-cols-2 gap-4 bg-white border border-border-base rounded p-4 shadow-sm">
                             <div>
-                                <p className="drawer-label">Issue Date</p>
-                                <p className="drawer-value flex items-center gap-1"><Calendar size={12} /> {fmtDate(invoice.issueDate)}</p>
+                                <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">Issue Date</p>
+                                <p className="text-sm font-medium flex items-center gap-1"><Calendar size={12} className="text-slate-400" /> {fmtDate(invoice.issueDate)}</p>
                             </div>
                             <div>
-                                <p className="drawer-label">Due Date</p>
-                                <p className={`drawer-value flex items-center gap-1 ${isOverdue ? 'text-red-500 font-bold' : ''}`}>
-                                    <Clock size={12} /> {fmtDate(invoice.dueDate)}
+                                <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">Due Date</p>
+                                <p className={`text-sm font-medium flex items-center gap-1 ${isOverdue ? 'text-red-500' : ''}`}>
+                                    <Clock size={12} className={isOverdue ? 'text-red-400' : 'text-slate-400'} /> {fmtDate(invoice.dueDate)}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Client */}
-                        <div className="drawer-section">
-                            <p className="drawer-section-title"><User size={12} /> Billed To</p>
-                            <p className="font-bold text-zinc-800">{invoice.client?.name}</p>
-                            <p className="text-sm text-zinc-500">{invoice.client?.email}</p>
-                            {invoice.client?.address && <p className="text-sm text-zinc-400 whitespace-pre-line">{invoice.client.address}</p>}
+                        <div className="bg-white border border-border-base rounded p-4 shadow-sm">
+                            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-3 flex items-center gap-1"><User size={12} /> Billed To</p>
+                            <p className="font-semibold text-text-primary text-sm">{invoice.client?.name}</p>
+                            <p className="text-sm text-text-secondary">{invoice.client?.email}</p>
+                            {invoice.client?.address && <p className="text-sm text-text-secondary whitespace-pre-line mt-1">{invoice.client.address}</p>}
                         </div>
 
-                        {/* Sender */}
-                        <div className="drawer-section">
-                            <p className="drawer-section-title"><FileText size={12} /> Pay To</p>
-                            <p className="font-bold text-zinc-800">{invoice.sender?.name}</p>
-                            <p className="text-sm text-zinc-500">{invoice.sender?.email}</p>
-                            {invoice.sender?.address && <p className="text-sm text-zinc-400 whitespace-pre-line">{invoice.sender.address}</p>}
+                        <div className="bg-white border border-border-base rounded p-4 shadow-sm">
+                            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-3 flex items-center gap-1"><FileText size={12} /> Pay To</p>
+                            <p className="font-semibold text-text-primary text-sm">{invoice.sender?.name}</p>
+                            <p className="text-sm text-text-secondary">{invoice.sender?.email}</p>
+                            {invoice.sender?.address && <p className="text-sm text-text-secondary whitespace-pre-line mt-1">{invoice.sender.address}</p>}
                         </div>
 
-                        {/* Line Items */}
-                        <div className="drawer-section">
-                            <p className="drawer-section-title">Line Items</p>
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="border-b border-zinc-100">
-                                        <th className="text-left py-2 text-zinc-400 font-semibold text-xs">Description</th>
-                                        <th className="text-center py-2 text-zinc-400 font-semibold text-xs">Qty</th>
-                                        <th className="text-right py-2 text-zinc-400 font-semibold text-xs">Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {(invoice.items || []).map((item, i) => (
-                                        <tr key={i} className="border-b border-zinc-50">
-                                            <td className="py-2 text-zinc-700">{item.description || '—'}</td>
-                                            <td className="py-2 text-center text-zinc-500">{item.quantity}</td>
-                                            <td className="py-2 text-right font-semibold">{sym}{Number(item.amount || 0).toFixed(2)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                        <div className="bg-white border border-border-base rounded shadow-sm overflow-hidden text-sm">
+                            <div className="bg-slate-50 px-4 py-2 border-b border-border-base text-[10px] font-semibold text-text-secondary uppercase tracking-widest">
+                                Line Items
+                            </div>
+                            <div className="divide-y divide-border-base">
+                                {(invoice.items || []).map((item, i) => (
+                                    <div key={i} className="px-4 py-3 flex justify-between items-start gap-4">
+                                        <div className="flex-1">
+                                            <p className="font-medium text-text-primary">{item.description || '—'}</p>
+                                            <p className="text-xs text-text-secondary mt-0.5">Qty: {item.quantity}</p>
+                                        </div>
+                                        <div className="text-right font-medium text-text-primary">
+                                            {sym}{Number(item.amount || 0).toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Financials */}
-                        <div className="drawer-section bg-zinc-50 rounded-2xl p-4 space-y-2">
-                            <div className="flex justify-between text-sm text-zinc-500">
+                        <div className="bg-white border border-border-base rounded p-4 shadow-sm space-y-2 text-sm">
+                            <div className="flex justify-between text-text-secondary">
                                 <span>Subtotal</span><span>{sym}{Number(invoice.subtotal || 0).toFixed(2)}</span>
                             </div>
                             {invoice.taxPercentage > 0 && (
-                                <div className="flex justify-between text-sm text-zinc-500">
+                                <div className="flex justify-between text-text-secondary">
                                     <span>{invoice.taxName || 'Tax'} ({invoice.taxPercentage}%)</span>
                                     <span>{sym}{Number(invoice.taxAmount || 0).toFixed(2)}</span>
                                 </div>
                             )}
                             {invoice.discount > 0 && (
-                                <div className="flex justify-between text-sm text-zinc-500">
+                                <div className="flex justify-between text-text-secondary">
                                     <span>Discount</span><span>-{sym}{Number(invoice.discount).toFixed(2)}</span>
                                 </div>
                             )}
-                            <div className="flex justify-between font-black text-lg pt-2 border-t border-zinc-200">
+                            <div className="flex justify-between font-semibold text-base pt-2 border-t border-border-base text-text-primary">
                                 <span>Total</span><span>{sym}{Number(invoice.totalAmount).toFixed(2)}</span>
                             </div>
                         </div>
 
-                        {/* Payment / Notes */}
-                        {(invoice.paymentQr || invoice.notes) && (
-                            <div className="drawer-section">
-                                {invoice.paymentQr && (
-                                    <div className="mb-3">
-                                        <p className="drawer-label">UPI ID</p>
-                                        <p className="text-sm font-mono text-zinc-700">{invoice.paymentQr}</p>
-                                    </div>
-                                )}
-                                {invoice.notes && (
-                                    <div>
-                                        <p className="drawer-label">Notes / Terms</p>
-                                        <p className="text-sm text-zinc-500 whitespace-pre-line">{invoice.notes}</p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
                         {/* Lifecycle timestamps */}
-                        <div className="drawer-section grid grid-cols-2 gap-3 text-sm">
-                            {invoice.sentAt && <div><p className="drawer-label">Sent</p><p className="drawer-value">{fmtDate(invoice.sentAt)}</p></div>}
-                            {invoice.viewedAt && <div><p className="drawer-label">Viewed</p><p className="drawer-value">{fmtDate(invoice.viewedAt)}</p></div>}
-                            {invoice.paidAt && <div><p className="drawer-label">Paid</p><p className="drawer-value text-emerald-600 font-bold">{fmtDate(invoice.paidAt)}</p></div>}
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                            {invoice.sentAt && <div className="bg-white p-3 rounded border border-border-base"><p className="text-slate-400 font-semibold uppercase tracking-widest mb-1 text-[9px]">Sent</p><p className="font-medium">{fmtDate(invoice.sentAt)}</p></div>}
+                            {invoice.paidAt && <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 p-3 rounded"><p className="text-emerald-500 font-semibold uppercase tracking-widest mb-1 text-[9px]">Paid</p><p className="font-medium">{fmtDate(invoice.paidAt)}</p></div>}
                         </div>
                     </div>
 
-                    {/* ── Drawer Footer (sticky) ─────────────────── */}
-                    <div className="drawer-footer">
-                        <button onClick={handleDownload} className="drawer-action-btn">
-                            <Download size={14} /> Download PDF
-                        </button>
-
+                    {/* Footer */}
+                    <div className="p-4 bg-white border-t border-border-base shrink-0 flex gap-2 flex-wrap">
+                        <Button variant="secondary" onClick={handleDownload} className="flex-1 text-xs py-2 shadow-none"><Download size={14} className="mr-1.5" /> PDF</Button>
+                        <Button variant="secondary" onClick={handleDuplicate} className="flex-1 text-xs py-2 shadow-none"><Copy size={14} className="mr-1.5" /> Duplicate</Button>
+                        <Button variant="secondary" onClick={handleDelete} className="text-xs py-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shadow-none"><Trash2 size={14} /></Button>
+                        
                         {invoice.status !== 'paid' && (
-                            <button onClick={handleMarkPaid} className="drawer-action-btn drawer-action-success">
-                                <CheckCircle size={14} /> Mark as Paid
-                            </button>
+                            <Button variant="primary" onClick={handleMarkPaid} className="w-full mt-2 text-xs py-2 shadow-none bg-emerald-500 hover:bg-emerald-600">
+                                <CheckCircle size={14} className="mr-1.5" /> Mark as Paid
+                            </Button>
                         )}
-
-                        <button onClick={handleDuplicate} className="drawer-action-btn">
-                            <Copy size={14} /> Duplicate
-                        </button>
-
-                        <button disabled title="Coming soon" className="drawer-action-btn opacity-40 cursor-not-allowed">
-                            <Send size={14} /> Send Reminder
-                        </button>
-
-                        <button onClick={handleDelete} className="drawer-action-btn drawer-action-danger">
-                            <Trash2 size={14} /> Delete
-                        </button>
                     </div>
                 </motion.div>
             </div>
