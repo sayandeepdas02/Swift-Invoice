@@ -15,6 +15,18 @@ const Navbar = () => {
         navigate('/signin');
     };
 
+    const handleNavClick = (e, targetId) => {
+        if (location.pathname === '/') {
+            e.preventDefault();
+            const el = document.getElementById(targetId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth' });
+                setIsOpen(false);
+            }
+        }
+        // If not on '/', the standard href="/#targetId" will natively navigate and jump
+    };
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-150 bg-brand-base border-b border-white/20">
             <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between relative">
@@ -33,10 +45,10 @@ const Navbar = () => {
 
                 {/* 2. Middle Links (Desktop) */}
                 <div className="hidden md:flex items-center justify-center gap-8 relative z-10">
-                    <a href="#product" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Product</a>
-                    <a href="#solutions" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Solutions</a>
-                    <a href="#testimonials" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Testimonials</a>
-                    <a href="#pricing" className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Pricing</a>
+                    <a href="/#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Features</a>
+                    <a href="/#testimonials" onClick={(e) => handleNavClick(e, 'testimonials')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Case Studies</a>
+                    <a href="/#pricing" onClick={(e) => handleNavClick(e, 'pricing')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Pricing</a>
+                    <a href="/#blog" onClick={(e) => handleNavClick(e, 'blog')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Blog</a>
                 </div>
 
                 {/* 3. Right Side */}
@@ -46,9 +58,6 @@ const Navbar = () => {
                             <span className="text-sm font-medium text-white/80 hidden sm:block tracking-tight">
                                 {user.name}
                             </span>
-                            <Link to="/invoices" className="text-sm font-medium text-white/80 hover:text-white transition-colors hidden md:block tracking-tight">
-                                History
-                            </Link>
                             <Link to="/dashboard" className="hidden md:block">
                                 <Button variant="secondary" size="sm" className="shadow-none bg-white text-brand-base border-0 hover:bg-slate-50 font-semibold px-5 tracking-tight">Dashboard</Button>
                             </Link>
@@ -98,10 +107,10 @@ const Navbar = () => {
                         </>
                     ) : (
                         <>
-                            <a href="#product" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Product</a>
-                            <a href="#solutions" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Solutions</a>
-                            <a href="#testimonials" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Testimonials</a>
-                            <a href="#pricing" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Pricing</a>
+                            <a href="/#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Features</a>
+                            <a href="/#blog" onClick={(e) => handleNavClick(e, 'blog')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Blog</a>
+                            <a href="/#testimonials" onClick={(e) => handleNavClick(e, 'testimonials')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Case Studies</a>
+                            <a href="/#pricing" onClick={(e) => handleNavClick(e, 'pricing')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Pricing</a>
                             <Link to="/signin" onClick={() => setIsOpen(false)} className="w-full mt-4">
                                 <Button variant="secondary" className="w-full bg-white text-brand-base font-semibold tracking-tight">Get Started</Button>
                             </Link>

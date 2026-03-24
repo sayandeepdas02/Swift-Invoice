@@ -33,10 +33,12 @@ const LandingPage = () => {
             {/* Master Grid Container */}
             <main className="max-w-7xl mx-auto border-l border-r border-slate-200 bg-white flex flex-col min-h-screen relative shadow-sm">
                 
-                <FeaturesSectionWithBentoGrid />
+                <div id="features" className="scroll-mt-16">
+                    <FeaturesSectionWithBentoGrid />
+                </div>
 
                 {/* Case Studies Block */}
-                <section id="testimonials" className="w-full bg-white border-b border-slate-200">
+                <section id="testimonials" className="w-full bg-white border-b border-slate-200 scroll-mt-16">
                     <div className="py-24 border-b border-slate-200 flex flex-col items-center text-center px-6 bg-slate-50 relative overflow-hidden">
                         <div className="mb-8 px-3 py-1 border border-slate-200 rounded-sm text-xs font-semibold text-text-secondary uppercase tracking-widest bg-white shadow-sm z-10 transition-colors hover:bg-slate-50 cursor-default">
                             Case Studies
@@ -71,12 +73,12 @@ const LandingPage = () => {
                     </div>
                 </section>
 
-                <div id="pricing">
+                <div id="pricing" className="scroll-mt-16">
                     <Pricing2 />
                 </div>
 
                 {/* Blog Section */}
-                <section className="border-t border-slate-200 py-20 bg-white">
+                <section id="blog" className="border-t border-slate-200 py-20 bg-white scroll-mt-16">
                   <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 
                     <div className="max-w-2xl">
