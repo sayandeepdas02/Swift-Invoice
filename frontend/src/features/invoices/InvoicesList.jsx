@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, LayoutGrid, List, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import api from '../lib/api';
+import { invoiceApi } from '../../services/api/invoiceApi';
 import { toast } from 'react-hot-toast';
-import KanbanBoard from '../components/KanbanBoard';
-import TableView from '../components/TableView';
-import InvoiceDrawer from '../components/InvoiceDrawer';
-import Button from '../components/ui/Button';
+import KanbanBoard from '../../components/KanbanBoard';
+import TableView from '../../components/TableView';
+import InvoiceDrawer from '../../components/InvoiceDrawer';
+import Button from '../../components/ui/Button';
 
 // Added specific filters requested: All, Paid, Pending, Overdue, Draft
 const STATUS_FILTERS = ['all', 'paid', 'pending', 'overdue', 'draft'];
@@ -24,7 +24,7 @@ const InvoicesList = () => {
 
     const fetchInvoices = useCallback(async () => {
         try {
-            const { data } = await api.get('/invoices');
+            const data = await invoiceApi.getAll();
             setInvoices(data);
         } catch {
             toast.error('Failed to fetch invoices');
@@ -38,7 +38,7 @@ const InvoicesList = () => {
     const handleStatusChange = async (invoiceId, newStatus, rollbackStatus) => {
         setInvoices(prev => prev.map(inv => inv._id === invoiceId ? { ...inv, status: newStatus } : inv));
         try {
-            const { data } = await api.patch(`/invoices/${invoiceId}/status`, { status: newStatus });
+            const data = await invoiceApi.updateStatus(invoiceId, newStatus);
             setInvoices(prev => prev.map(inv => inv._id === invoiceId ? data : inv));
         } catch {
             setInvoices(prev => prev.map(inv => inv._id === invoiceId ? { ...inv, status: rollbackStatus } : inv));

@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Trash2, Download, Check, AlertCircle, Upload, ArrowLeft, Send } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import api from '../lib/api';
-import { useAuth } from '../context/AuthContext';
-import LivePreview from '../components/LivePreview';
-import Button from '../components/ui/Button';
+import { invoiceApi } from '../../services/api/invoiceApi';
+import { useAuth } from '../../context/AuthContext';
+import LivePreview from '../../components/LivePreview';
+import Button from '../../components/ui/Button';
 
 // ---------------------------------------------------------------------------
 // P0 BUG FIX: Stable Component Definitions
@@ -74,7 +74,6 @@ const InvoiceBuilder = () => {
     const [qrPreview, setQrPreview] = useState('');
     const [isDirty, setIsDirty] = useState(false);
     
-    // Using simple location state to determine if we should auto-fill
     useEffect(() => {
         if (id) {
             fetchInvoice(id);
@@ -95,9 +94,9 @@ const InvoiceBuilder = () => {
 
     const fetchInvoice = async (invoiceId) => {
         try {
-            const { data } = await api.get(`/invoices/${invoiceId}`);
+            const data = await invoiceApi.getById(invoiceId);
             setInvoice(data);
-            if (data.sender.logo) setLogoPreview(data.sender.logo);
+            if (data.sender?.logo) setLogoPreview(data.sender.logo);
             if (data.qrCodeImage) setQrPreview(data.qrCodeImage);
             setIsDirty(false);
         } catch (error) {
@@ -118,7 +117,7 @@ const InvoiceBuilder = () => {
 
     const currencySymbol = currencies.find(c => c.code === invoice.currency)?.symbol || invoice.currency;
 
-    // Derived values
+    // Derived values (client-side fallback for fluid typing)
     const subtotal = invoice.items.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
     const taxAmount = (subtotal * invoice.taxPercentage) / 100;
     const totalAmount = subtotal + taxAmount - invoice.discount;
@@ -198,25 +197,27 @@ const InvoiceBuilder = () => {
         }
 
         try {
+            // Include client-computed totals for payload fallback, backend recomputes dynamically
             const payload = { ...invoice, subtotal, taxAmount, totalAmount, isDraft };
-            let response;
+            let responseData;
+            
             if (isEditMode || invoice._id) {
                 const targetId = invoice._id || id;
-                response = await api.put(`/invoices/${targetId}`, payload);
+                responseData = await invoiceApi.update(targetId, payload);
+                setInvoice(responseData); // Sync native backend struct
                 if (!silent) showToast('Invoice updated successfully!');
             } else {
-                response = await api.post('/invoices', payload);
-                // On first create, attach the generated ID so subsequent auto-saves update it
-                if (response.data._id) {
-                    setInvoice(prev => ({ ...prev, _id: response.data._id }));
-                    navigate(`/invoices/edit/${response.data._id}`, { replace: true });
+                responseData = await invoiceApi.create(payload);
+                setInvoice(responseData);
+                if (responseData._id) {
+                    navigate(`/invoices/edit/${responseData._id}`, { replace: true });
                 }
                 if (!silent) showToast('Draft saved successfully!');
             }
             setIsDirty(false);
-            return response.data;
+            return responseData;
         } catch (error) {
-            if (!silent) showToast(error.response?.data?.message || 'Error saving invoice', 'error');
+            if (!silent) showToast(error.message || 'Error saving invoice', 'error');
             return null;
         }
     };
@@ -255,11 +256,9 @@ const InvoiceBuilder = () => {
 
         setIsGenerating(true);
         try {
-            const pdfResponse = await api.get(`/invoices/${savedInvoice._id}/download`, {
-                responseType: 'blob'
-            });
+            const pdfBlobData = await invoiceApi.downloadPdf(savedInvoice._id);
 
-            const url = window.URL.createObjectURL(new Blob([pdfResponse.data]));
+            const url = window.URL.createObjectURL(new Blob([pdfBlobData]));
             const link = document.createElement('a');
             link.href = url;
             link.setAttribute('download', `INV-${invoice.invoiceNumber}.pdf`);

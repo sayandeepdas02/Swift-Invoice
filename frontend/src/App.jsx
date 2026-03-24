@@ -5,8 +5,8 @@ import { Toaster } from 'react-hot-toast';
 // Public components
 import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
+import SignIn from './features/auth/SignIn';
+import SignUp from './features/auth/SignUp';
 
 // Layout & Auth
 import { AuthProvider } from './context/AuthContext';
@@ -15,9 +15,9 @@ import DashboardLayout from './components/layout/DashboardLayout';
 
 // SaaS Pages
 import DashboardHome from './pages/DashboardHome';
-import InvoicesList from './pages/InvoicesList';
-import InvoiceBuilder from './pages/InvoiceBuilder';
-import ClientsList from './pages/ClientsList';
+import InvoicesList from './features/invoices/InvoicesList';
+import InvoiceBuilder from './features/invoices/InvoiceBuilder';
+import ClientsList from './features/clients/ClientsList';
 
 // Layout Wrappers
 const PublicLayout = ({ children }) => (

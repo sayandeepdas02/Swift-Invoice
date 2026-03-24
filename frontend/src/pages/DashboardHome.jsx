@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, ArrowRight, TrendingUp, CheckCircle2, Clock, AlertTriangle, FileText } from 'lucide-react';
-import api from '../lib/api';
+import { invoiceApi } from '../services/api/invoiceApi';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import dayjs from 'dayjs';
@@ -21,6 +21,7 @@ const StatCard = ({ title, value, icon, trend }) => (
 
 const DashboardHome = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const [invoices, setInvoices] = useState([]);
     const [stats, setStats] = useState({
         totalRevenue: 0,
@@ -33,7 +34,7 @@ const DashboardHome = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const { data } = await api.get('/invoices');
+                const data = await invoiceApi.getAll();
                 setInvoices(data.slice(0, 5)); // Get 5 most recent
 
                 // Calculate simple stats
@@ -46,14 +47,17 @@ const DashboardHome = () => {
 
                 data.forEach(inv => {
                     const amount = inv.totalAmount || 0;
-                    if (inv.status === 'Paid') {
+                    if (inv.status === 'Paid' || inv.status === 'paid') {
                         pd += amount;
                         rev += amount; // Assuming paid is realized revenue
-                    } else if (inv.status === 'Pending') {
+                    } else if (inv.status === 'Pending' || inv.status === 'sent' || inv.status === 'viewed') {
                         pend += amount;
                         if (inv.dueDate && dayjs(inv.dueDate).isBefore(today)) {
                             over += 1;
                         }
+                    } else if (inv.isOverdue || inv.status === 'overdue') {
+                        pend += amount;
+                        over += 1;
                     }
                 });
 

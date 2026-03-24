@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, User, FileText, TrendingUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import api from '../lib/api';
+import { invoiceApi } from '../../services/api/invoiceApi';
 import { toast } from 'react-hot-toast';
-import Button from '../components/ui/Button';
+import Button from '../../components/ui/Button';
 
 // Mock simple Drawer for Address Book to satisfy the "Create/Edit Client" requirement
 // Since clients are embedded in invoices, we'll store user-created clients in localStorage
@@ -77,7 +77,7 @@ const ClientsList = () => {
     useEffect(() => {
         const fetchInvoices = async () => {
             try {
-                const { data } = await api.get('/invoices');
+                const data = await invoiceApi.getAll();
                 setInvoices(data);
             } catch (error) {
                 toast.error('Failed to analyze client data');

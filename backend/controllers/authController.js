@@ -1,89 +1,55 @@
-import User from '../models/User.js';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as authService from '../services/authService.js';
 
-const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET, {
-        expiresIn: '30d'
-    });
+const COOKIE_OPTIONS = {
+    httpOnly: true,
+    secure: true, // Always secure for cross-site cookies
+    sameSite: 'none', // Required for cross-site cookies (Vercel Frontend -> Render Backend)
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
 };
 
 export const register = async (req, res) => {
     try {
-        const { name, email, password, mobile } = req.body;
+        const { user, token } = await authService.registerUser(req.body);
+        
+        res.cookie('jwt', token, COOKIE_OPTIONS);
 
-        if (!name || !email || !password || !mobile) {
-            return res.status(400).json({ message: 'All fields are required' });
-        }
-
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
-        }
-
-        const user = await User.create({
-            name,
-            email,
-            password,
-            mobile
-        });
-
-        if (user) {
-            const token = generateToken(user._id);
-
-            res.cookie('jwt', token, {
-                httpOnly: true,
-                secure: true, // Always secure for cross-site cookies
-                sameSite: 'none', // Required for cross-site cookies (Vercel Frontend -> Render Backend)
-                maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-            });
-
-
-            res.status(201).json({
+        res.status(201).json({
+            success: true,
+            data: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 mobile: user.mobile
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
-        }
+            },
+            message: 'User registered successfully'
+        });
     } catch (error) {
         console.error('Register Error:', error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
     }
 };
 
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        const { user, token } = await authService.loginUser(email, password);
 
-        const user = await User.findOne({ email });
+        res.cookie('jwt', token, COOKIE_OPTIONS);
 
-        if (user && (await user.comparePassword(password))) {
-            const token = generateToken(user._id);
-
-            res.cookie('jwt', token, {
-                httpOnly: true,
-                secure: true, // Always secure for cross-site cookies
-                sameSite: 'none', // Required for cross-site cookies (Vercel Frontend -> Render Backend)
-                maxAge: 30 * 24 * 60 * 60 * 1000
-            });
-
-
-            res.json({
+        res.json({
+            success: true,
+            data: {
                 _id: user._id,
                 name: user.name,
                 email: user.email,
                 mobile: user.mobile,
                 businessDetails: user.businessDetails
-            });
-        } else {
-            res.status(401).json({ message: 'Invalid email or password' });
-        }
+            },
+            message: 'Login successful'
+        });
     } catch (error) {
         console.error('Login Error:', error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
     }
 };
 
@@ -92,15 +58,15 @@ export const logout = (req, res) => {
         httpOnly: true,
         expires: new Date(0)
     });
-    res.status(200).json({ message: 'Logged out successfully' });
+    res.status(200).json({ success: true, data: null, message: 'Logged out successfully' });
 };
 
 export const getMe = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('-password');
-        res.json(user);
+        const user = await authService.getUserById(req.user._id);
+        res.json({ success: true, data: user, message: 'User profile retrieved' });
     } catch (error) {
         console.error('GetMe Error:', error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
     }
 };

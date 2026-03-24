@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import Button from '../../components/ui/Button';
 
-const SignUp = () => {
-    const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+const SignIn = () => {
+    const [formData, setFormData] = useState({ email: '', password: '' });
     const [isLoading, setIsLoading] = useState(false);
-    const { register } = useAuth();
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,7 +15,7 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        const success = await register(formData);
+        const success = await login(formData);
         setIsLoading(false);
         if (success) navigate('/dashboard');
     };
@@ -28,29 +29,14 @@ const SignUp = () => {
                     <div className="w-full max-w-[420px] space-y-8">
                         <div>
                             <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">
-                                Create your account
+                                Welcome back
                             </h2>
                             <p className="mt-2 text-sm text-slate-500 tracking-tight">
-                                Start generating professional invoices in seconds.
+                                Enter your details to continue to Swift Invoice.
                             </p>
                         </div>
 
                         <form className="space-y-5" onSubmit={handleSubmit}>
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-slate-900 tracking-tight">Full Name</label>
-                                <div className="relative">
-                                    <input
-                                        name="name"
-                                        type="text"
-                                        required
-                                        placeholder="John Doe"
-                                        value={formData.name}
-                                        onChange={handleChange}
-                                        className="w-full px-4 py-2.5 bg-transparent border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-brand-base focus:ring-1 focus:ring-brand-base rounded-none transition-colors"
-                                    />
-                                </div>
-                            </div>
-
                             <div className="space-y-1.5">
                                 <label className="text-sm font-medium text-slate-900 tracking-tight">Email address</label>
                                 <div className="relative">
@@ -67,7 +53,12 @@ const SignUp = () => {
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-medium text-slate-900 tracking-tight">Password</label>
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-medium text-slate-900 tracking-tight">Password</label>
+                                    <Link to="#" className="text-xs font-medium text-slate-500 hover:text-slate-900 hover:underline transition-colors tracking-tight">
+                                        Forgot password?
+                                    </Link>
+                                </div>
                                 <div className="relative">
                                     <input
                                         name="password"
@@ -86,12 +77,12 @@ const SignUp = () => {
                                 disabled={isLoading}
                                 className="w-full h-10 bg-brand-base hover:bg-brand-hover text-white flex items-center justify-center font-medium text-sm rounded-none tracking-tight transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                {isLoading ? 'Creating account...' : 'Create account'}
+                                {isLoading ? 'Signing in...' : 'Sign in'}
                             </button>
 
                             <div className="relative flex items-center py-2">
                                 <div className="flex-grow border-t border-slate-200"></div>
-                                <span className="flex-shrink-0 mx-4 text-xs text-slate-400 font-medium tracking-tight uppercase">Or sign up with</span>
+                                <span className="flex-shrink-0 mx-4 text-xs text-slate-400 font-medium tracking-tight uppercase">Or continue with</span>
                                 <div className="flex-grow border-t border-slate-200"></div>
                             </div>
 
@@ -110,9 +101,9 @@ const SignUp = () => {
                         </form>
 
                         <p className="text-sm text-slate-500 tracking-tight">
-                            Already have an account?{' '}
-                            <Link to="/signin" className="font-medium text-slate-900 hover:text-brand-base hover:underline transition-colors">
-                                Sign in
+                            Don't have an account?{' '}
+                            <Link to="/signup" className="font-medium text-slate-900 hover:text-brand-base hover:underline transition-colors">
+                                Sign up
                             </Link>
                         </p>
                     </div>
@@ -137,4 +128,4 @@ const SignUp = () => {
     );
 };
 
-export default SignUp;
+export default SignIn;

@@ -1,12 +1,10 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { authApi } from '../services/api/authApi';
 
 const AuthContext = createContext();
 
 export const useAuth = () => useContext(AuthContext);
-
-import api from '../lib/api';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -18,7 +16,7 @@ export const AuthProvider = ({ children }) => {
 
     const checkUserLoggedIn = async () => {
         try {
-            const { data } = await api.get('/auth/me');
+            const data = await authApi.getMe();
             setUser(data);
         } catch (error) {
             setUser(null);
@@ -29,31 +27,31 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (userData) => {
         try {
-            const { data } = await api.post('/auth/register', userData);
+            const data = await authApi.register(userData);
             setUser(data);
             toast.success('Registration successful!');
             return true;
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Registration failed');
+            toast.error(error.message || 'Registration failed');
             return false;
         }
     };
 
     const login = async (userData) => {
         try {
-            const { data } = await api.post('/auth/login', userData);
+            const data = await authApi.login(userData);
             setUser(data);
             toast.success('Login successful!');
             return true;
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Login failed');
+            toast.error(error.message || 'Login failed');
             return false;
         }
     };
 
     const logout = async () => {
         try {
-            await api.post('/auth/logout');
+            await authApi.logout();
             setUser(null);
             toast.success('Logged out successfully');
         } catch (error) {
