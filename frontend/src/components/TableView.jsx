@@ -10,16 +10,14 @@ const PAGE_SIZE = 25;
 
 const STATUS_STYLES = {
     draft: 'bg-slate-100 text-slate-600',
-    sent: 'bg-blue-50 text-blue-600',
-    viewed: 'bg-purple-50 text-purple-600',
-    awaiting_payment: 'bg-orange-50 text-orange-600',
+    pending: 'bg-yellow-50 text-yellow-700',
+    sent: 'bg-yellow-50 text-yellow-700', // Map legacy to pending
     paid: 'bg-emerald-50 text-emerald-700',
-    pending: 'bg-amber-50 text-amber-700',
-    cancelled: 'bg-red-50 text-red-600',
+    overdue: 'bg-red-50 text-red-600',
 };
+
 const STATUS_LABELS = {
-    draft: 'Draft', sent: 'Sent', viewed: 'Viewed', awaiting_payment: 'Awaiting',
-    paid: 'Paid', pending: 'Pending', cancelled: 'Cancelled',
+    draft: 'Draft', pending: 'Pending', sent: 'Pending', paid: 'Paid', overdue: 'Overdue'
 };
 
 const computeOverdue = (inv) => !inv.paidAt && inv.dueDate && new Date() > new Date(inv.dueDate);
@@ -111,8 +109,12 @@ const TableView = ({ invoices, searchTerm, statusFilter, onRowClick }) => {
                             ) : (
                                 paginated.map(inv => {
                                     const overdue = computeOverdue(inv);
-                                    const statusCls = STATUS_STYLES[inv.status] || 'bg-slate-100 text-slate-500';
-                                    const statusLabel = STATUS_LABELS[inv.status] || inv.status;
+                                    let effStatus = inv.status?.toLowerCase() || 'draft';
+                                    if (inv.isDraft) effStatus = 'draft';
+                                    if (effStatus !== 'paid' && overdue) effStatus = 'overdue';
+
+                                    const statusCls = STATUS_STYLES[effStatus] || 'bg-slate-100 text-slate-500';
+                                    const statusLabel = STATUS_LABELS[effStatus] || effStatus;
                                     return (
                                         <motion.tr
                                             key={inv._id}

@@ -9,11 +9,9 @@ import { format } from 'date-fns';
 
 const COLUMNS = [
     { id: 'draft', label: 'Draft', color: '#94a3b8', draggable: true },
-    { id: 'sent', label: 'Sent', color: '#60a5fa', draggable: true },
-    { id: 'viewed', label: 'Viewed', color: '#a78bfa', draggable: true },
-    { id: 'awaiting_payment', label: 'Awaiting Payment', color: '#fb923c', draggable: true },
-    { id: 'paid', label: 'Paid', color: '#34d399', draggable: true },
-    { id: 'overdue', label: 'Overdue', color: '#f87171', draggable: false },
+    { id: 'pending', label: 'Pending / Sent', color: '#eab308', draggable: true },
+    { id: 'paid', label: 'Paid', color: '#10b981', draggable: true },
+    { id: 'overdue', label: 'Overdue', color: '#ef4444', draggable: false },
 ];
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£', INR: '₹', AUD: 'A$', CAD: 'C$', SGD: 'S$' };

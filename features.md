@@ -10,23 +10,27 @@
 
 | Area | Feature | Status | Details |
 |------|---------|--------|---------|
-| **Landing Page** | Hero, Features, Pricing, Testimonials, CTA, Footer | ✅ Complete | "View Sample Invoice" works; responsive layout; placeholder links updated |
-| **Auth Pages** | Sign In (`/signin`) | ✅ Complete | Email + Password, redirects to Dashboard on success |
-| | Sign Up (`/signup`) | ✅ Complete | Name, Email, Mobile, Password + Confirm; immediate feedback on mismatch |
-| **Navbar** | Sticky top bar with logo | ✅ Complete | Shows user name, Dashboard, My Invoices; responsive Mobile Menu |
-| **Protected Route** | Dashboard guard | ✅ Complete | Redirects to `/signin` if unauthenticated; shows spinner while loading |
-| **Auth Context** | Global auth state | ✅ Complete | Persists session via `GET /auth/me`; handles login/register/logout securely |
-| **Invoice Builder** | Dynamic line items | ✅ Complete | Add / remove rows; real-time Qty × Rate calculation |
-| | Sender & Client details | ✅ Complete | Pre-fills sender info from user profile; custom logo upload |
-| | Invoice metadata | ✅ Complete | Auto-generated Invoice #, Issue Date, Due Date; editable |
-| | Tax & Discount | ✅ Complete | Custom Tax Name (e.g., VAT, GST), percentage, and fixed Discount amount |
-| | Notes / Terms | ✅ Complete | Free-text area rendered in PDF footer |
-| | Currency selector | ✅ Complete | 7 currencies; symbols update dynamically in UI and PDF |
-| **Invoice History** | List View | ✅ Complete | Sortable list of all created invoices; status badges (Paid/Pending) |
-| | Management | ✅ Complete | **Edit:** Re-open invoice in builder; **Delete:** Remove invoice; **Status:** Toggle Paid/Pending/Cancelled |
-| | Drafts | ✅ Complete | "Save Draft" button saves progress without generating PDF |
-| **PDF Download** | Generate & download | ✅ Complete | Professional A4 PDF with correct currency symbols and layout |
-| **Toast Notifications** | Custom toast system | ✅ Complete | Animated feedback for success/error actions (Auth, Save, PDF Gen) |
+| **Landing Page** | Global Design | ✅ Complete | Enterprise-level SaaS UI system with strict grid-based layouts, consistent border systems, and radial-gradient textures. |
+| | Hero Section | ✅ Complete | Dynamic layout with "View Sample Invoice" functionality; clean spacing and structural typography (Inter font). |
+| | Pricing Section (`/`) | ✅ Complete | 3-tier SaaS structure (Starter, Growth, Enterprise); highlighted Growth plan; equal-height sharp-edged cards. |
+| | Testimonials & Footer | ✅ Complete | Responsive layouts with placeholder links updated. |
+| **Auth Pages** | Sign In (`/signin`) | ✅ Complete | Email + Password; Premium split-screen layout showing high-res Dashboard preview image; redirects to Dashboard on success. |
+| | Sign Up (`/signup`) | ✅ Complete | Name, Email, Mobile, Password + Confirm; Split-screen UI with Dashboard preview; immediate feedback on mismatch. |
+| **Navbar & Branding**| Top Bar | ✅ Complete | Sticky top bar with logo; dark mode toggle integration capability; shows user name, Dashboard, My Invoices. |
+| | Branding | ✅ Complete | Custom document-dollar favicon (`favicon.png`); consistent pink-600 brand color accents. |
+| **Protected Route** | Dashboard guard | ✅ Complete | Redirects to `/signin` if unauthenticated; shows spinner while loading. |
+| **Auth Context** | Global auth state | ✅ Complete | Persists session via `GET /auth/me`; handles login/register/logout securely. |
+| **Invoice Builder** | Dynamic line items | ✅ Complete | Add / remove rows; real-time Qty × Rate calculation. |
+| | Sender & Client details | ✅ Complete | Pre-fills sender info from user profile; custom logo upload. |
+| | Invoice metadata | ✅ Complete | Auto-generated Invoice #, Issue Date, Due Date; editable. |
+| | Tax & Discount | ✅ Complete | Custom Tax Name (e.g., VAT, GST), percentage, and fixed Discount amount. |
+| | Notes / Terms | ✅ Complete | Free-text area rendered in PDF footer. |
+| | Currency selector | ✅ Complete | 7 currencies; symbols update dynamically in UI and PDF. |
+| **Invoice History** | List View | ✅ Complete | Sortable list of all created invoices; status badges (Paid/Pending). |
+| | Management | ✅ Complete | **Edit:** Re-open invoice in builder; **Delete:** Remove invoice; **Status:** Toggle Paid/Pending/Cancelled. |
+| | Drafts | ✅ Complete | "Save Draft" button saves progress without generating PDF. |
+| **PDF Download** | Generate & download | ✅ Complete | Professional A4 PDF with correct currency symbols and layout. |
+| **Toast Notifications**| Custom toast system | ✅ Complete | Animated feedback for success/error actions (Auth, Save, PDF Gen). |
 
 ### Backend
 

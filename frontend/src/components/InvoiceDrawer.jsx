@@ -11,12 +11,10 @@ const currSym = (code) => CURRENCIES[code] || code;
 
 const STATUS_STYLES = {
     draft: { label: 'Draft', cls: 'bg-slate-100 text-slate-600' },
-    sent: { label: 'Sent', cls: 'bg-blue-50 text-blue-600' },
-    viewed: { label: 'Viewed', cls: 'bg-purple-50 text-purple-600' },
-    awaiting_payment: { label: 'Awaiting Payment', cls: 'bg-orange-50 text-orange-600' },
+    pending: { label: 'Pending', cls: 'bg-yellow-50 text-yellow-700' },
+    sent: { label: 'Pending', cls: 'bg-yellow-50 text-yellow-700' }, // Map legacy sent
     paid: { label: 'Paid', cls: 'bg-emerald-50 text-emerald-700' },
-    pending: { label: 'Pending', cls: 'bg-amber-50 text-amber-700' },
-    cancelled: { label: 'Cancelled', cls: 'bg-red-50 text-red-600' },
+    overdue: { label: 'Overdue', cls: 'bg-red-50 text-red-600' },
 };
 
 const computeOverdue = (inv) => !inv.paidAt && inv.dueDate && new Date() > new Date(inv.dueDate);
@@ -38,7 +36,12 @@ const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate }) =>
 
     const sym = currSym(invoice.currency);
     const isOverdue = computeOverdue(invoice);
-    const status = STATUS_STYLES[invoice.status] || { label: invoice.status, cls: 'bg-slate-100 text-slate-600' };
+    
+    let effStatus = invoice.status?.toLowerCase() || 'draft';
+    if (invoice.isDraft) effStatus = 'draft';
+    if (effStatus !== 'paid' && isOverdue) effStatus = 'overdue';
+
+    const status = STATUS_STYLES[effStatus] || { label: effStatus, cls: 'bg-slate-100 text-slate-600' };
 
     const handleMarkPaid = async () => {
         try {
@@ -130,14 +133,14 @@ const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate }) =>
 
                     {/* Body */}
                     <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                        <div className="bg-white border border-border-base rounded p-4 shadow-sm">
-                            <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">Total Amount</p>
-                            <p className="text-3xl font-semibold tracking-tight text-text-primary">
+                        <div className="bg-white border border-slate-200 rounded-none p-4 shadow-none">
+                            <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest mb-1">Total Amount</p>
+                            <p className="text-3xl font-bold tracking-tight text-slate-900">
                                 {sym}{Number(invoice.totalAmount).toFixed(2)}
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4 bg-white border border-border-base rounded p-4 shadow-sm">
+                        <div className="grid grid-cols-2 gap-4 bg-white border border-slate-200 rounded-none p-4 shadow-none">
                             <div>
                                 <p className="text-[10px] font-semibold text-text-secondary uppercase tracking-widest mb-1">Issue Date</p>
                                 <p className="text-sm font-medium flex items-center gap-1"><Calendar size={12} className="text-slate-400" /> {fmtDate(invoice.issueDate)}</p>
