@@ -34,10 +34,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api/invoices', invoiceRoutes);
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI, {
+    // Recommendation from MongoDB Atlas for Stable API integration
+    serverApi: {
+        version: '1',
+        strict: true,
+        deprecationErrors: true,
+    }
+})
     .then(() => console.log('✅ MongoDB Connected'))
     .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
 app.listen(PORT, () => {
-    console.log(`🚀 Swift Invoice Backend running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
