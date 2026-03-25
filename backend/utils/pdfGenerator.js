@@ -1,4 +1,4 @@
-import htmlPdf from 'html-pdf-node';
+import puppeteer from 'puppeteer-core';
 
 export const generateInvoicePDF = async (invoiceData) => {
 
@@ -129,13 +129,30 @@ export const generateInvoicePDF = async (invoiceData) => {
     margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
   };
 
-  const file = { content: htmlContent };
-
+  let browser;
   try {
-    const pdfBuffer = await htmlPdf.generatePdf(file, options);
+    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+    browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: executablePath,
+      headless: 'new'
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf(options);
     return pdfBuffer;
   } catch (error) {
-    console.error('PDF Generation Error:', error);
+    console.error('PDF Generation Error (Puppeteer):', error);
+    if (error.message.includes('browser was not found')) {
+      console.error('\\n*** CHROMIUM EXECUTABLE NOT FOUND ***');
+      console.error('Ensure PUPPETEER_EXECUTABLE_PATH is set correctly in your environment variables.');
+      console.error('For Railway: Set PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium and ensure a Chromium buildpack or apt-get install is used.\\n');
+    }
     throw error;
+  } finally {
+    if (browser) {
+      await browser.close().catch(console.error);
+    }
   }
 };
