@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, ArrowRight, TrendingUp, CheckCircle2, Clock, AlertTriangle, FileText } from 'lucide-react';
 import { invoiceApi } from '../services/api/invoiceApi';
+import { dashboardApi } from '../services/api/dashboardApi';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 import dayjs from 'dayjs';
@@ -34,36 +35,23 @@ const DashboardHome = () => {
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const data = await invoiceApi.getAll();
-                setInvoices(data.slice(0, 5)); // Get 5 most recent
-
-                // Calculate simple stats
-                let rev = 0;
-                let pd = 0;
-                let pend = 0;
-                let over = 0;
-
-                const today = dayjs();
-
-                data.forEach(inv => {
-                    const amount = inv.totalAmount || 0;
-                    if (inv.status === 'Paid' || inv.status === 'paid') {
-                        pd += amount;
-                        rev += amount; // Assuming paid is realized revenue
-                    } else if (inv.status === 'Pending' || inv.status === 'sent' || inv.status === 'viewed') {
-                        pend += amount;
-                        if (inv.dueDate && dayjs(inv.dueDate).isBefore(today)) {
-                            over += 1;
-                        }
-                    } else if (inv.isOverdue || inv.status === 'overdue') {
-                        pend += amount;
-                        over += 1;
-                    }
+                const [metricsData, invoiceData] = await Promise.all([
+                    dashboardApi.getMetrics(),
+                    invoiceApi.getAll()
+                ]);
+                
+                setInvoices(invoiceData.slice(0, 5)); // Keep latest 5 for feed
+                
+                // Overlay pure DB computed logic explicitly
+                setStats({ 
+                    totalRevenue: metricsData.totalRevenue || 0, 
+                    paid: metricsData.currentMonthRevenue || 0, 
+                    pending: metricsData.pendingAmount || 0, 
+                    overdueCount: metricsData.overdueInvoicesCount || 0,
+                    trend: metricsData.percentageChange > 0 ? `+${metricsData.percentageChange.toFixed(1)}%` : (metricsData.percentageChange < 0 ? `${metricsData.percentageChange.toFixed(1)}%` : null)
                 });
-
-                setStats({ totalRevenue: rev, paid: pd, pending: pend, overdueCount: over });
             } catch (error) {
-                console.error("Failed to load dashboard data");
+                console.error("Failed to load dashboard data", error);
             } finally {
                 setLoading(false);
             }
@@ -110,7 +98,7 @@ const DashboardHome = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard title="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon={<TrendingUp size={20} />} trend="+12.5%" />
+                <StatCard title="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon={<TrendingUp size={20} />} trend={stats.trend} />
                 <StatCard title="Paid" value={formatCurrency(stats.paid)} icon={<CheckCircle2 size={20} />} />
                 <StatCard title="Pending" value={formatCurrency(stats.pending)} icon={<Clock size={20} />} />
                 <StatCard title="Overdue Invoices" value={stats.overdueCount} icon={<AlertTriangle size={20} className={stats.overdueCount > 0 ? "text-red-500" : ""} />} />
