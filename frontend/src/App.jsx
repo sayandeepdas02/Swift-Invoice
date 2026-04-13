@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import LandingPage from './pages/LandingPage';
 import SignIn from './features/auth/SignIn';
 import SignUp from './features/auth/SignUp';
+import PublicInvoice from './pages/PublicInvoice';
 
 // Layout & Auth
 import { AuthProvider } from './context/AuthContext';
@@ -18,6 +19,7 @@ import DashboardHome from './pages/DashboardHome';
 import InvoicesList from './features/invoices/InvoicesList';
 import InvoiceBuilder from './features/invoices/InvoiceBuilder';
 import ClientsList from './features/clients/ClientsList';
+import Settings from './pages/Settings';
 
 // Layout Wrappers
 const PublicLayout = ({ children }) => (
@@ -45,6 +47,7 @@ function App() {
           <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
           <Route path="/signin" element={<PublicLayout><SignIn /></PublicLayout>} />
           <Route path="/signup" element={<PublicLayout><SignUp /></PublicLayout>} />
+          <Route path="/invoice/:publicId" element={<PublicInvoice />} />
 
           {/* Authenticated SaaS Routes */}
           <Route path="/dashboard" element={<AuthLayout><DashboardHome /></AuthLayout>} />
@@ -52,7 +55,7 @@ function App() {
           <Route path="/invoices/new" element={<AuthLayout><InvoiceBuilder /></AuthLayout>} />
           <Route path="/invoices/edit/:id" element={<AuthLayout><InvoiceBuilder /></AuthLayout>} />
           <Route path="/clients" element={<AuthLayout><ClientsList /></AuthLayout>} />
-          <Route path="/settings" element={<AuthLayout><div className="p-8"><h1 className="text-2xl font-bold mb-4">Settings</h1><p>Configuration options coming soon.</p></div></AuthLayout>} />
+          <Route path="/settings" element={<AuthLayout><Settings /></AuthLayout>} />
           <Route path="/help" element={<AuthLayout><div className="p-8"><h1 className="text-2xl font-bold mb-4">Help & Support</h1><p>Contact us at support@swiftinvoice.com</p></div></AuthLayout>} />
         </Routes>
       </Router>

@@ -7,6 +7,13 @@ import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import invoiceRoutes from './routes/invoices.js';
 import authRoutes from './routes/auth.js';
+import publicRoutes from './routes/public.js';
+import clientRoutes from './routes/clients.js';
+import settingsRoutes from './routes/settings.js';
+import dashboardRoutes from './routes/dashboard.js';
+import uploadRoutes from './routes/upload.js';
+import serviceRoutes from './routes/services.js';
+import './cron/reminders.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -26,12 +33,18 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/invoices', invoiceRoutes);
+app.use('/api/public', publicRoutes);
+app.use('/api/clients', clientRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI, {
