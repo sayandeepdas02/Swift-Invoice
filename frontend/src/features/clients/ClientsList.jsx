@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Plus, User, FileText, TrendingUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { invoiceApi } from '../../services/api/invoiceApi';
+import { clientApi } from '../../services/api/clientApi';
 import { toast } from 'react-hot-toast';
 import Button from '../../components/ui/Button';
 
@@ -10,6 +11,26 @@ import Button from '../../components/ui/Button';
 // and merge them with invoice-derived clients for display.
 const ClientDrawer = ({ client, onClose, onSave }) => {
     const [formData, setFormData] = useState(client || { name: '', email: '', address: '' });
+    const [history, setHistory] = useState(null);
+    const [activeTab, setActiveTab] = useState('details'); // details or history
+    const [loadingHistory, setLoadingHistory] = useState(false);
+
+    useEffect(() => {
+        if (client?._id && activeTab === 'history' && !history) {
+            const fetchHistory = async () => {
+                setLoadingHistory(true);
+                try {
+                    const data = await clientApi.getHistory(client._id);
+                    setHistory(data);
+                } catch (error) {
+                    toast.error('Failed to load client history');
+                } finally {
+                    setLoadingHistory(false);
+                }
+            };
+            fetchHistory();
+        }
+    }, [client, activeTab, history]);
 
     const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
@@ -26,15 +47,26 @@ const ClientDrawer = ({ client, onClose, onSave }) => {
                     initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 250 }}
                     onClick={e => e.stopPropagation()}
                 >
-                    <div className="flex items-center justify-between p-6 border-b border-slate-200 shrink-0">
-                        <h2 className="text-base font-bold text-slate-900 tracking-tight">{client ? 'Edit Client' : 'New Client'}</h2>
-                        <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-900 transition-colors">
-                            <X size={18} />
-                        </button>
+                >
+                    <div className="flex flex-col border-b border-slate-200 shrink-0">
+                        <div className="flex items-center justify-between p-6 pb-4">
+                            <h2 className="text-base font-bold text-slate-900 tracking-tight">{client ? 'Client Details' : 'New Client'}</h2>
+                            <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-900 transition-colors">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        {client && (
+                            <div className="flex gap-6 px-6">
+                                <button onClick={() => setActiveTab('details')} className={`pb-3 text-sm font-bold tracking-tight border-b-2 transition-colors ${activeTab === 'details' ? 'border-brand-base text-brand-base' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>Edit Profile</button>
+                                <button onClick={() => setActiveTab('history')} className={`pb-3 text-sm font-bold tracking-tight border-b-2 transition-colors ${activeTab === 'history' ? 'border-brand-base text-brand-base' : 'border-transparent text-slate-500 hover:text-slate-900'}`}>History & Invoices</button>
+                            </div>
+                        )}
                     </div>
 
-                    <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
-                        <div className="space-y-4">
+                    {activeTab === 'details' || !client ? (
+                        <>
+                            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+                                <div className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Company / Name</label>
                                 <input required name="name" value={formData.name} onChange={handleChange} placeholder="Acme Corp" className="w-full border-b border-slate-200 py-2 focus:border-brand-base focus:outline-none text-sm text-slate-900 tracking-tight placeholder:text-slate-300 transition-colors" />
@@ -48,12 +80,51 @@ const ClientDrawer = ({ client, onClose, onSave }) => {
                                 <textarea name="address" value={formData.address} onChange={handleChange} placeholder="123 Standard Way..." className="w-full border-b border-slate-200 py-2 focus:border-brand-base focus:outline-none text-sm text-slate-900 tracking-tight placeholder:text-slate-300 transition-colors min-h-[80px] resize-none" />
                             </div>
                         </div>
-                    </form>
+                            </form>
 
-                    <div className="p-4 border-t border-slate-200 shrink-0 flex gap-2">
-                        <Button variant="secondary" onClick={onClose} className="flex-1 shadow-none tracking-tight">Cancel</Button>
-                        <Button variant="primary" onClick={handleSubmit} className="flex-1 shadow-none bg-brand-base hover:bg-brand-hover border-none tracking-tight">Save Client</Button>
-                    </div>
+                            <div className="p-4 border-t border-slate-200 shrink-0 flex gap-2">
+                                <Button variant="secondary" onClick={onClose} className="flex-1 shadow-none tracking-tight">Cancel</Button>
+                                <Button variant="primary" onClick={handleSubmit} className="flex-1 shadow-none bg-brand-base hover:bg-brand-hover border-none tracking-tight">Save Client</Button>
+                            </div>
+                        </>
+                    ) : (
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50 text-sm">
+                            {loadingHistory ? (
+                                <div className="text-slate-500 text-center py-10 font-medium animate-pulse">Loading history...</div>
+                            ) : history ? (
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-white border border-slate-200 p-4">
+                                            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Total Revenue</div>
+                                            <div className="text-xl font-black text-emerald-600">${history.summary.totalRevenue.toFixed(2)}</div>
+                                        </div>
+                                        <div className="bg-white border border-slate-200 p-4">
+                                            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">Overdue</div>
+                                            <div className="text-xl font-black text-red-600">${history.summary.overdueAmount.toFixed(2)}</div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-slate-900 mb-3 tracking-tight">All Invoices ({history.summary.invoiceCount})</h3>
+                                        {history.invoices.length === 0 ? (
+                                            <div className="text-slate-500 text-xs">No invoices found for this client.</div>
+                                        ) : (
+                                            <ul className="space-y-2">
+                                                {history.invoices.map((inv, idx) => (
+                                                    <li key={idx} className="bg-white border border-slate-200 p-3 flex justify-between items-center group hover:border-brand-base transition-colors cursor-pointer" onClick={() => window.location.href = `/invoices/edit/${inv._id}`}>
+                                                        <div>
+                                                            <div className="font-bold text-slate-900 leading-none mb-1">{inv.invoiceNumber}</div>
+                                                            <div className="text-[10px] text-slate-500 font-medium uppercase tracking-widest">{inv.status}</div>
+                                                        </div>
+                                                        <div className="font-bold text-slate-900">${(inv.totalAmount || 0).toFixed(2)}</div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : null}
+                        </div>
+                    )}
                 </motion.div>
             </div>
         </AnimatePresence>
@@ -61,96 +132,80 @@ const ClientDrawer = ({ client, onClose, onSave }) => {
 };
 
 const ClientsList = () => {
+    const [clients, setClients] = useState([]);
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    
-    // Manual Address Book State
-    const [addressBook, setAddressBook] = useState(() => {
-        const saved = localStorage.getItem('swift_clients');
-        return saved ? JSON.parse(saved) : [];
-    });
-
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState(null);
 
     useEffect(() => {
-        const fetchInvoices = async () => {
+        const fetchData = async () => {
             try {
-                const data = await invoiceApi.getAll();
-                setInvoices(data);
+                const [invData, clientData] = await Promise.all([
+                    invoiceApi.getAll(),
+                    clientApi.getAll()
+                ]);
+                setInvoices(invData);
+                setClients(clientData);
             } catch (error) {
-                toast.error('Failed to analyze client data');
+                toast.error('Failed to load client data');
+                console.error(error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchInvoices();
+        fetchData();
     }, []);
 
     const clientsAggregated = useMemo(() => {
         const map = new Map();
         
-        // Base seed from Address Book
-        addressBook.forEach(c => {
-            const key = c.email?.toLowerCase() || c.name?.toLowerCase();
-            if (key) {
-                map.set(key, { ...c, totalInvoices: 0, totalRevenue: 0, isManual: true });
-            }
+        // Base seed from backend
+        clients.forEach(c => {
+            map.set(c._id.toString(), { ...c, totalInvoices: 0, totalRevenue: 0 });
         });
 
-        // Overlay with live invoice data
+        // Overlay with live invoice data for totals
         invoices.forEach(inv => {
             if (!inv.client || (!inv.client.name && !inv.client.email)) return;
-            const key = inv.client.email?.toLowerCase() || inv.client.name?.toLowerCase();
-            if (!key) return;
-
-            if (!map.has(key)) {
-                map.set(key, {
-                    name: inv.client.name,
-                    email: inv.client.email,
-                    address: inv.client.address || '',
-                    totalInvoices: 0,
-                    totalRevenue: 0,
-                    isManual: false
-                });
-            }
-
-            const record = map.get(key);
-            record.totalInvoices += 1;
-            if (inv.status === 'paid' || inv.status === 'Paid') {
-                record.totalRevenue += (inv.totalAmount || 0);
-            }
-            // Update name and email if we found better ones in the invoice
-            if (!record.name && inv.client.name) record.name = inv.client.name;
-            if (!record.email && inv.client.email) record.email = inv.client.email;
+            const targetEmail = inv.client.email?.toLowerCase();
             
-            map.set(key, record);
+            let matchedClient = clients.find(c => c.email.toLowerCase() === targetEmail);
+            
+            if (matchedClient) {
+                const record = map.get(matchedClient._id.toString());
+                record.totalInvoices += 1;
+                if (inv.status === 'paid' || inv.status === 'Paid') {
+                    record.totalRevenue += (inv.totalAmount || 0);
+                }
+                map.set(matchedClient._id.toString(), record);
+            }
         });
 
         return Array.from(map.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
-    }, [invoices, addressBook]);
+    }, [invoices, clients]);
 
     const filteredClients = clientsAggregated.filter(c => 
         c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
         c.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleSaveClient = (clientData) => {
-        let updatedBook = [...addressBook];
-        const keyMatch = (c) => c.email?.toLowerCase() === clientData.email?.toLowerCase() && c.email !== '';
-        
-        const existingIdx = updatedBook.findIndex(keyMatch);
-        if (existingIdx >= 0) {
-            updatedBook[existingIdx] = { ...updatedBook[existingIdx], ...clientData };
-        } else {
-            updatedBook.push({ ...clientData, _id: Date.now().toString() });
+    const handleSaveClient = async (clientData) => {
+        try {
+            if (clientData._id) {
+                await clientApi.update(clientData._id, clientData);
+                setClients(prev => prev.map(c => c._id === clientData._id ? {...c, ...clientData} : c));
+                toast.success('Client updated successfully');
+            } else {
+                const newClient = await clientApi.create(clientData);
+                setClients(prev => [...prev, newClient]);
+                toast.success('Client saved successfully');
+            }
+            setIsDrawerOpen(false);
+        } catch (error) {
+            toast.error(error.message || 'Failed to save client');
         }
-        
-        setAddressBook(updatedBook);
-        localStorage.setItem('swift_clients', JSON.stringify(updatedBook));
-        setIsDrawerOpen(false);
-        toast.success('Client saved successfully');
     };
 
     if (loading) {
