@@ -1,14 +1,27 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useGoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import Button from '../../components/ui/Button';
 
 const SignIn = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
+
+    const handleGoogleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            setIsLoading(true);
+            const success = await loginWithGoogle(tokenResponse.access_token);
+            setIsLoading(false);
+            if (success) navigate('/dashboard');
+        },
+        onError: () => {
+            console.error('Google Sign In Failed');
+        }
+    });
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -88,7 +101,9 @@ const SignIn = () => {
 
                             <button
                                 type="button"
-                                className="w-full h-10 bg-transparent border border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center justify-center font-medium text-sm rounded-none tracking-tight transition-colors"
+                                onClick={() => handleGoogleLogin()}
+                                disabled={isLoading}
+                                className="w-full h-10 bg-transparent border border-slate-200 hover:bg-slate-50 text-slate-700 flex items-center justify-center font-medium text-sm rounded-none tracking-tight transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

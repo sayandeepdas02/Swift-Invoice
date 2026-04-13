@@ -49,6 +49,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const loginWithGoogle = async (accessToken) => {
+        try {
+            const data = await authApi.googleLogin(accessToken);
+            setUser(data);
+            toast.success('Google login successful!');
+            return true;
+        } catch (error) {
+            toast.error(error.message || 'Google login failed');
+            return false;
+        }
+    };
+
     const logout = async () => {
         try {
             await authApi.logout();
@@ -64,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         register,
         login,
+        loginWithGoogle,
         logout
     };
 

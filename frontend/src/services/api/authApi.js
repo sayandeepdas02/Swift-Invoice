@@ -7,6 +7,12 @@ export const authApi = {
         return data.data;
     },
 
+    googleLogin: async (accessToken) => {
+        const { data } = await api.post('/api/auth/google', { accessToken });
+        if (!data.success) throw new Error(data.message);
+        return data.data;
+    },
+
     register: async (userData) => {
         const { data } = await api.post('/api/auth/register', userData);
         if (!data.success) throw new Error(data.message);

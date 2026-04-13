@@ -2,8 +2,8 @@ import * as authService from '../services/authService.js';
 
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: true, // Always secure for cross-site cookies
-    sameSite: 'none', // Required for cross-site cookies (Vercel Frontend -> Render Backend)
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // 'none' for cross-domain prod, 'lax' for local dev
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
 };
 
@@ -55,7 +55,8 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
     res.cookie('jwt', '', {
-        httpOnly: true,
+        ...COOKIE_OPTIONS,
+        maxAge: 0,
         expires: new Date(0)
     });
     res.status(200).json({ success: true, data: null, message: 'Logged out successfully' });
@@ -68,5 +69,33 @@ export const getMe = async (req, res) => {
     } catch (error) {
         console.error('GetMe Error:', error);
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
+    }
+};
+
+export const googleLogin = async (req, res) => {
+    try {
+        const { accessToken } = req.body;
+        if (!accessToken) {
+            return res.status(400).json({ success: false, data: null, message: 'Google Access Token required' });
+        }
+
+        const { user, token } = await authService.googleLoginUser(accessToken);
+
+        res.cookie('jwt', token, COOKIE_OPTIONS);
+
+        res.json({
+            success: true,
+            data: {
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                mobile: user.mobile,
+                businessDetails: user.businessDetails
+            },
+            message: 'Google login successful'
+        });
+    } catch (error) {
+        console.error('Google Login Error:', error);
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message || 'Google Auth Failed' });
     }
 };
