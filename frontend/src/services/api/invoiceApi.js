@@ -7,8 +7,20 @@ export const invoiceApi = {
         return data.data;
     },
     
+    getLast: async () => {
+        const { data } = await api.get('/api/invoices/last');
+        if (!data.success) throw new Error(data.message);
+        return data.data;
+    },
+
     getById: async (id) => {
         const { data } = await api.get(`/api/invoices/${id}`);
+        if (!data.success) throw new Error(data.message);
+        return data.data;
+    },
+
+    getPublic: async (publicId) => {
+        const { data } = await api.get(`/api/public/invoice/${publicId}`);
         if (!data.success) throw new Error(data.message);
         return data.data;
     },
@@ -49,5 +61,11 @@ export const invoiceApi = {
             responseType: 'blob'
         });
         return response.data;
+    },
+
+    send: async (id, messagePayload) => {
+        const { data } = await api.post(`/api/invoices/${id}/send`, messagePayload);
+        if (!data.success) throw new Error(data.message);
+        return data.data;
     }
 };

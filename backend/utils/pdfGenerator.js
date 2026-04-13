@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer-core';
+import sanitizeHtml from 'sanitize-html';
 
 export const generateInvoicePDF = async (invoiceData) => {
 
@@ -6,6 +7,7 @@ export const generateInvoicePDF = async (invoiceData) => {
     'USD': '$', 'EUR': '€', 'GBP': '£', 'INR': '₹', 'AUD': 'A$', 'CAD': 'C$', 'SGD': 'S$'
   };
   const symbol = currencySymbols[invoiceData.currency] || invoiceData.currency;
+  const sanitize = (text) => sanitizeHtml(text || '', { allowedTags: [], allowedAttributes: {} });
 
   // HTML Template for the Invoice
   const htmlContent = `
@@ -37,11 +39,11 @@ export const generateInvoicePDF = async (invoiceData) => {
       <div class="header">
         <div class="logo-container">
           ${invoiceData.sender.logo ? `<img src="${invoiceData.sender.logo}" class="logo" alt="Company Logo">` : ''}
-          ${invoiceData.sender.companyName ? `<h2 style="margin:0; font-weight:900; margin-top: 10px;">${invoiceData.sender.companyName}</h2>` : `<h2 style="margin:0; font-weight:900;">SWIFT INVOICE</h2>`}
+          ${invoiceData.sender.companyName ? `<h2 style="margin:0; font-weight:900; margin-top: 10px;">${sanitize(invoiceData.sender.companyName)}</h2>` : `<h2 style="margin:0; font-weight:900;">SWIFT INVOICE</h2>`}
         </div>
         <div class="invoice-details">
           <h1>INVOICE</h1>
-          <p class="detail-item">#${invoiceData.invoiceNumber}</p>
+          <p class="detail-item">#${sanitize(invoiceData.invoiceNumber)}</p>
           <p class="detail-item">Date: ${new Date(invoiceData.issueDate).toLocaleDateString()}</p>
           <p class="detail-item">Due: ${invoiceData.dueDate ? new Date(invoiceData.dueDate).toLocaleDateString() : 'N/A'}</p>
         </div>
@@ -50,15 +52,15 @@ export const generateInvoicePDF = async (invoiceData) => {
       <div class="details-grid">
         <div>
           <div class="section-title">Billed To</div>
-          <div class="detail-item"><strong>${invoiceData.client.name}</strong></div>
-          <div class="detail-item">${invoiceData.client.email}</div>
-          <div class="detail-item">${invoiceData.client.address || ''}</div>
+          <div class="detail-item"><strong>${sanitize(invoiceData.client.name)}</strong></div>
+          <div class="detail-item">${sanitize(invoiceData.client.email)}</div>
+          <div class="detail-item">${sanitize(invoiceData.client.address)}</div>
         </div>
         <div style="text-align: right;">
           <div class="section-title">Pay To</div>
-          <div class="detail-item"><strong>${invoiceData.sender.name}</strong></div>
-          <div class="detail-item">${invoiceData.sender.email}</div>
-          <div class="detail-item">${invoiceData.sender.address || ''}</div>
+          <div class="detail-item"><strong>${sanitize(invoiceData.sender.name)}</strong></div>
+          <div class="detail-item">${sanitize(invoiceData.sender.email)}</div>
+          <div class="detail-item">${sanitize(invoiceData.sender.address)}</div>
         </div>
       </div>
 
@@ -74,8 +76,8 @@ export const generateInvoicePDF = async (invoiceData) => {
         <tbody>
           ${invoiceData.items.map(item => `
             <tr>
-              <td>${item.description}</td>
-              <td style="text-align: center;">${item.quantity}</td>
+              <td>${sanitize(item.description)}</td>
+              <td style="text-align: center;">${sanitize(String(item.quantity))}</td>
               <td style="text-align: right;">${symbol}${Number(item.rate).toFixed(2)}</td>
               <td style="text-align: right;">${symbol}${Number(item.amount).toFixed(2)}</td>
             </tr>
@@ -109,8 +111,8 @@ export const generateInvoicePDF = async (invoiceData) => {
       <div class="footer">
         <div class="notes">
           <div class="section-title">Notes / Terms</div>
-          <p>${invoiceData.notes || 'Thank you for your business!'}</p>
-          ${invoiceData.paymentQr ? `<p style="margin-top: 10px;"><strong>UPI ID:</strong> ${invoiceData.paymentQr}</p>` : ''}
+          <p>${sanitize(invoiceData.notes) || 'Thank you for your business!'}</p>
+          ${invoiceData.paymentQr ? `<p style="margin-top: 10px;"><strong>UPI ID:</strong> ${sanitize(invoiceData.paymentQr)}</p>` : ''}
         </div>
         ${invoiceData.qrCodeImage ? `
           <div style="text-align: center;">

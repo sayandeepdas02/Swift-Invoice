@@ -11,6 +11,12 @@ const invoiceSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    publicId: {
+        type: String,
+        unique: true,
+        sparse: true,
+        index: true
+    },
     status: {
         type: String,
         enum: ['draft', 'sent', 'viewed', 'awaiting_payment', 'paid', 'pending', 'cancelled'], // legacy pending/cancelled kept for backward compat
@@ -63,7 +69,17 @@ const invoiceSchema = new mongoose.Schema({
     // Lifecycle timestamps (null = not yet reached that state)
     sentAt: { type: Date, default: null },
     viewedAt: { type: Date, default: null },
-    paidAt: { type: Date, default: null },
+    paidAt: {
+        type: Date
+    },
+    lastReminderSentAt: {
+        type: Date,
+        default: null
+    },
+    reminderCount: {
+        type: Number,
+        default: 0
+    },
 
     // Payment QR
     paymentQr: String,

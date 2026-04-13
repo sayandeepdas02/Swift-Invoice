@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Download, Check, AlertCircle, Upload, ArrowLeft, Send } from 'lucide-react';
+import { Plus, Trash2, Download, Check, AlertCircle, Upload, ArrowLeft, Send, BookmarkPlus } from 'lucide-react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { invoiceApi } from '../../services/api/invoiceApi';
+import { clientApi } from '../../services/api/clientApi';
+import { uploadApi } from '../../services/api/uploadApi';
+import { serviceApi } from '../../services/api/serviceApi';
 import { useAuth } from '../../context/AuthContext';
 import LivePreview from '../../components/LivePreview';
 import Button from '../../components/ui/Button';
+import { toast } from 'react-hot-toast';
 
 // ---------------------------------------------------------------------------
 // P0 BUG FIX: Stable Component Definitions
@@ -13,7 +17,7 @@ import Button from '../../components/ui/Button';
 // unmounted/remounted on every keystroke, keeping cursor focus preserved.
 // ---------------------------------------------------------------------------
 
-const InputLine = ({ label, value, onChange, placeholder, type = 'text', width = 'w-full' }) => (
+const InputLine = ({ label, value, onChange, placeholder, type = 'text', width = 'w-full', onFocus, onBlur }) => (
     <div className={`flex items-center gap-4 py-1.5 border-b border-slate-200 group ${width}`}>
         <label className="text-xs font-semibold text-slate-500 w-28 shrink-0 tracking-tight">{label}</label>
         <input
@@ -21,6 +25,8 @@ const InputLine = ({ label, value, onChange, placeholder, type = 'text', width =
             placeholder={placeholder}
             value={value}
             onChange={onChange}
+            onFocus={onFocus}
+            onBlur={onBlur}
             className="w-full bg-transparent text-sm text-slate-900 focus:outline-none placeholder:text-slate-300"
         />
     </div>
@@ -69,26 +75,75 @@ const InvoiceBuilder = () => {
     });
 
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
+    const [customMessage, setCustomMessage] = useState('');
+    const [clients, setClients] = useState([]);
+    const [showClientDropdown, setShowClientDropdown] = useState(false);
     const [toast, setToast] = useState(null);
     const [logoPreview, setLogoPreview] = useState('');
     const [qrPreview, setQrPreview] = useState('');
     const [isDirty, setIsDirty] = useState(false);
+    const [savedServices, setSavedServices] = useState([]);
+    const [activeServiceIdx, setActiveServiceIdx] = useState(-1);
+    const [mobileTab, setMobileTab] = useState('form'); // 'form' or 'preview'
     
     useEffect(() => {
+        const loadClients = async () => {
+            try {
+                const data = await clientApi.getAll();
+                setClients(data);
+            } catch (err) {
+                console.error('Failed to load clients safely', err);
+            }
+        };
+        const loadServices = async () => {
+            try {
+                const data = await serviceApi.getAll();
+                setSavedServices(data);
+            } catch (err) {
+                console.error('Failed to load services', err);
+            }
+        };
+        loadClients();
+        loadServices();
+
         if (id) {
             fetchInvoice(id);
-        } else if (user?.businessDetails) {
-            setInvoice(prev => ({
-                ...prev,
-                sender: {
-                    name: user.businessDetails.name || '',
-                    email: user.businessDetails.email || '',
-                    address: user.businessDetails.address || '',
-                    logo: user.businessDetails.logo || '',
-                    companyName: user.businessDetails.companyName || ''
+        } else if (user) {
+            const fetchDefaults = async () => {
+                let defaultData = {
+                    sender: {
+                        name: user.name || '',
+                        email: user.businessEmail || user.email || '',
+                        address: user.businessAddress || '',
+                        logo: user.logoUrl || '',
+                        companyName: user.businessName || ''
+                    },
+                    currency: user.defaultCurrency || 'USD'
+                };
+
+                try {
+                    const lastInvoice = await invoiceApi.getLast();
+                    if (lastInvoice) {
+                        defaultData.taxName = lastInvoice.taxName;
+                        defaultData.taxPercentage = lastInvoice.taxPercentage;
+                        defaultData.notes = lastInvoice.notes;
+                        defaultData.paymentQr = lastInvoice.paymentQr;
+                        if (lastInvoice.qrCodeImage) {
+                            setQrPreview(lastInvoice.qrCodeImage);
+                            defaultData.qrCodeImage = lastInvoice.qrCodeImage;
+                        }
+                        if (lastInvoice.currency) defaultData.currency = lastInvoice.currency;
+                    }
+                } catch (err) {
+                    // Silently ignore if no history exists yet
                 }
-            }));
-            if (user.businessDetails.logo) setLogoPreview(user.businessDetails.logo);
+
+                setInvoice(prev => ({ ...prev, ...defaultData }));
+                if (user.logoUrl) setLogoPreview(user.logoUrl);
+            };
+            fetchDefaults();
         }
     }, [id, user]);
 
@@ -158,29 +213,41 @@ const InvoiceBuilder = () => {
         setIsDirty(true);
     };
 
-    const handleLogoUpload = (e) => {
+    const handleLogoUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result;
-                setLogoPreview(base64String);
-                updateNestedInvoice('sender', 'logo', base64String);
-            };
-            reader.readAsDataURL(file);
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('File size must be less than 2MB', 'error');
+                return;
+            }
+            const t = toast.loading('Uploading logo...');
+            try {
+                const url = await uploadApi.uploadImage(file);
+                setLogoPreview(url);
+                updateNestedInvoice('sender', 'logo', url);
+                toast.success('Uploaded logo successfully', { id: t });
+            } catch (err) {
+                toast.error(err.message || 'Logo upload failed', { id: t });
+            }
         }
     };
 
-    const handleQrUpload = (e) => {
+    const handleQrUpload = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result;
-                setQrPreview(base64String);
-                updateInvoice('qrCodeImage', base64String);
-            };
-            reader.readAsDataURL(file);
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('File size must be less than 2MB', 'error');
+                return;
+            }
+            const t = toast.loading('Uploading QR...');
+            try {
+                const url = await uploadApi.uploadImage(file);
+                setQrPreview(url);
+                updateInvoice('qrCodeImage', url);
+                toast.success('Uploaded QR code successfully', { id: t });
+            } catch (err) {
+                toast.error(err.message || 'QR upload failed', { id: t });
+            }
         }
     };
 
@@ -275,13 +342,52 @@ const InvoiceBuilder = () => {
         }
     };
 
+    const handleSend = async () => {
+        if (!invoice.client.email) {
+            showToast('Please add a client email before sending.', 'error');
+            return;
+        }
+        
+        const savedInvoice = await saveInvoice(false, true);
+        if (!savedInvoice) {
+            showToast('Failed to save before sending', 'error');
+            return;
+        }
+
+        setIsSending(true);
+        try {
+            await invoiceApi.send(savedInvoice._id, { message: customMessage });
+            showToast('Invoice sent to client successfully!');
+            setIsMessageModalOpen(false);
+            setCustomMessage('');
+            // update local status visually
+            setInvoice(prev => ({ ...prev, status: 'sent' }));
+        } catch (error) {
+            showToast(error.message || 'Error sending invoice', 'error');
+        } finally {
+            setIsSending(false);
+        }
+    };
+
     return (
         <div className="flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-slate-50">
+            {/* Mobile Tab Bar */}
+            <div className="md:hidden flex border-b border-slate-200 bg-white shrink-0">
+                <button
+                    className={`flex-1 py-3 text-sm font-bold tracking-tight text-center border-b-2 transition-colors ${mobileTab === 'form' ? 'border-brand-base text-brand-base' : 'border-transparent text-slate-500'}`}
+                    onClick={() => setMobileTab('form')}
+                >Form</button>
+                <button
+                    className={`flex-1 py-3 text-sm font-bold tracking-tight text-center border-b-2 transition-colors ${mobileTab === 'preview' ? 'border-brand-base text-brand-base' : 'border-transparent text-slate-500'}`}
+                    onClick={() => setMobileTab('preview')}
+                >Preview</button>
+            </div>
+
             {/* Split View Container */}
             <div className="flex flex-1 overflow-hidden">
                 
                 {/* LEFT SIDE: BUILDER FORM */}
-                <div className="w-1/2 flex flex-col bg-white border-r border-slate-200 shadow-sm relative z-10">
+                <div className={`md:w-1/2 w-full flex flex-col bg-white border-r border-slate-200 shadow-sm relative z-10 ${mobileTab !== 'form' ? 'hidden md:flex' : ''}`}>
                     
                     {/* Top Sticky Actions Bar */}
                     <div className="h-16 shrink-0 border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 bg-white z-20">
@@ -298,10 +404,10 @@ const InvoiceBuilder = () => {
                             <Button variant="secondary" onClick={() => saveInvoice(true, false)} className="shadow-none px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900">
                                 Save Draft
                             </Button>
-                            <Button variant="secondary" onClick={generatePDF} className="shadow-none px-3 py-1.5 text-xs">
+                            <Button variant="secondary" onClick={generatePDF} disabled={isGenerating || isSending} className="shadow-none px-3 py-1.5 text-xs">
                                 <Download size={14} className="mr-1.5" /> PDF
                             </Button>
-                            <Button variant="primary" onClick={() => saveInvoice(false, false)} className="shadow-none px-4 py-1.5 text-xs bg-brand-base hover:bg-brand-hover">
+                            <Button variant="primary" onClick={() => setIsMessageModalOpen(true)} disabled={isGenerating || isSending} className="shadow-none px-4 py-1.5 text-xs bg-brand-base hover:bg-brand-hover">
                                 <Send size={14} className="mr-1.5" /> Send
                             </Button>
                         </div>
@@ -363,10 +469,54 @@ const InvoiceBuilder = () => {
                                     <TextareaLine label="Address" value={invoice.sender.address} onChange={e => updateNestedInvoice('sender', 'address', e.target.value)} placeholder="123 Street..." />
                                 </div>
                             </div>
-                            <div>
+                            <div className="relative">
                                 <SectionHeader title="Billed To (Client)" />
-                                <div className="space-y-1">
-                                    <InputLine label="Client" value={invoice.client.name} onChange={e => updateNestedInvoice('client', 'name', e.target.value)} placeholder="Client Name or Company" />
+                                <div className="space-y-1 relative">
+                                    <div className="relative">
+                                        <InputLine 
+                                            label="Client" 
+                                            value={invoice.client.name} 
+                                            onChange={e => {
+                                                updateNestedInvoice('client', 'name', e.target.value);
+                                                setShowClientDropdown(true);
+                                            }}
+                                            onFocus={() => setShowClientDropdown(true)}
+                                            onBlur={() => setTimeout(() => setShowClientDropdown(false), 200)}
+                                            placeholder="Client Name or Company" 
+                                        />
+                                        
+                                        <AnimatePresence>
+                                            {showClientDropdown && invoice.client.name && (
+                                                <motion.div 
+                                                    initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -5 }}
+                                                    className="absolute top-full left-[128px] right-0 mt-1 bg-white border border-slate-200 shadow-xl max-h-48 overflow-y-auto z-50 rounded-none"
+                                                >
+                                                    {clients.filter(c => c.name.toLowerCase().includes(invoice.client.name.toLowerCase()) || (c.companyName && c.companyName.toLowerCase().includes(invoice.client.name.toLowerCase())) || (c.email && c.email.toLowerCase().includes(invoice.client.name.toLowerCase()))).length > 0 ? (
+                                                        clients.filter(c => c.name.toLowerCase().includes(invoice.client.name.toLowerCase()) || (c.companyName && c.companyName.toLowerCase().includes(invoice.client.name.toLowerCase())) || (c.email && c.email.toLowerCase().includes(invoice.client.name.toLowerCase()))).map(client => (
+                                                            <div 
+                                                                key={client._id} 
+                                                                className="px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-0"
+                                                                onClick={() => {
+                                                                    updateNestedInvoice('client', 'name', client.name);
+                                                                    updateNestedInvoice('client', 'email', client.email || '');
+                                                                    updateNestedInvoice('client', 'address', client.address || '');
+                                                                    setShowClientDropdown(false);
+                                                                }}
+                                                            >
+                                                                <div className="text-sm font-bold text-slate-900 tracking-tight">{client.companyName ? `${client.name} (${client.companyName})` : client.name}</div>
+                                                                <div className="text-[10px] uppercase font-bold tracking-widest text-slate-400">{client.email}</div>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="px-4 py-3 text-xs text-slate-500 italic flex items-center justify-between">
+                                                            <span>No existing match found.</span>
+                                                            <span className="text-[10px] bg-emerald-50 text-emerald-600 px-2 py-0.5 font-bold uppercase tracking-widest border border-emerald-100">Will be saved natively</span>
+                                                        </div>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
                                     <InputLine label="Email" type="email" value={invoice.client.email} onChange={e => updateNestedInvoice('client', 'email', e.target.value)} placeholder="client@company.com" />
                                     <TextareaLine label="Address" value={invoice.client.address} onChange={e => updateNestedInvoice('client', 'address', e.target.value)} placeholder="456 Avenue..." />
                                 </div>
@@ -386,13 +536,41 @@ const InvoiceBuilder = () => {
                             <div className="space-y-2">
                                 {invoice.items.map((item, index) => (
                                     <div key={index} className="flex gap-4 items-center group">
-                                        <div className="flex-1">
+                                        <div className="flex-1 relative">
                                             <input 
                                                 placeholder="Service description..." 
                                                 className="w-full bg-transparent text-sm text-slate-900 focus:outline-none placeholder:text-slate-300 py-1.5 border-b border-transparent focus:border-brand-base transition-colors" 
                                                 value={item.description} 
                                                 onChange={(e) => handleItemChange(index, 'description', e.target.value)} 
+                                                onFocus={() => setActiveServiceIdx(index)}
+                                                onBlur={() => setTimeout(() => setActiveServiceIdx(-1), 200)}
                                             />
+                                            {activeServiceIdx === index && item.description && savedServices.length > 0 && (
+                                                <div className="absolute left-0 top-full mt-1 w-full bg-white border border-slate-200 shadow-lg z-30 max-h-40 overflow-y-auto">
+                                                    {savedServices
+                                                        .filter(s => s.name.toLowerCase().includes(item.description.toLowerCase()))
+                                                        .slice(0, 5)
+                                                        .map(s => (
+                                                            <div
+                                                                key={s._id}
+                                                                className="px-3 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                                                                onMouseDown={(e) => {
+                                                                    e.preventDefault();
+                                                                    handleItemChange(index, 'description', s.name);
+                                                                    handleItemChange(index, 'rate', s.price);
+                                                                    setActiveServiceIdx(-1);
+                                                                }}
+                                                            >
+                                                                <div className="text-sm font-semibold text-slate-900">{s.name}</div>
+                                                                <div className="text-[10px] text-slate-400 flex justify-between">
+                                                                    <span>{s.description}</span>
+                                                                    <span className="font-bold">{currencySymbol}{Number(s.price).toFixed(2)}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    }
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="w-16">
                                             <input 
@@ -420,9 +598,29 @@ const InvoiceBuilder = () => {
                                     </div>
                                 ))}
                             </div>
-                            <button onClick={addItem} className="mt-4 text-xs font-bold tracking-widest uppercase text-brand-base flex items-center gap-1 hover:text-brand-hover transition-colors">
-                                <Plus className="w-4 h-4" /> Add Line Item
-                            </button>
+                            <div className="flex items-center gap-4 mt-4">
+                                <button onClick={addItem} className="text-xs font-bold tracking-widest uppercase text-brand-base flex items-center gap-1 hover:text-brand-hover transition-colors">
+                                    <Plus className="w-4 h-4" /> Add Line Item
+                                </button>
+                                {invoice.items.some(i => i.description && i.rate > 0) && (
+                                    <button
+                                        onClick={async () => {
+                                            const item = invoice.items.find(i => i.description && i.rate > 0);
+                                            if (!item) return;
+                                            try {
+                                                const newSvc = await serviceApi.create({ name: item.description, description: '', price: item.rate });
+                                                setSavedServices(prev => [...prev, newSvc]);
+                                                toast.success(`"${item.description}" saved as reusable service`);
+                                            } catch (err) {
+                                                toast.error(err.message || 'Failed to save service');
+                                            }
+                                        }}
+                                        className="text-xs font-bold tracking-widest uppercase text-slate-500 flex items-center gap-1 hover:text-brand-base transition-colors"
+                                    >
+                                        <BookmarkPlus className="w-4 h-4" /> Save as Service
+                                    </button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Section 4: Totals & Payments */}
@@ -511,7 +709,7 @@ const InvoiceBuilder = () => {
                 </div>
 
                 {/* RIGHT SIDE: LIVE PREVIEW */}
-                <div className="w-1/2 flex flex-col items-center justify-start overflow-y-auto p-8 relative">
+                <div className={`md:w-1/2 w-full flex flex-col items-center justify-start overflow-y-auto p-4 md:p-8 relative ${mobileTab !== 'preview' ? 'hidden md:flex' : ''}`}>
                     <div className="w-full max-w-[800px] h-full">
                         <LivePreview
                             invoice={invoice}
@@ -537,6 +735,47 @@ const InvoiceBuilder = () => {
                         {toast.type === 'error' ? <AlertCircle size={16} /> : <Check size={16} className="text-emerald-400" />}
                         <span className="font-semibold text-xs tracking-widest uppercase">{toast.message}</span>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Custom Message Modal */}
+            <AnimatePresence>
+                {isMessageModalOpen && (
+                    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="bg-white max-w-lg w-full rounded-none shadow-2xl overflow-hidden flex flex-col pointer-events-auto"
+                        >
+                            <div className="px-6 py-4 border-b border-slate-200">
+                                <h3 className="text-sm font-bold text-slate-900 tracking-tight">Send Invoice #{invoice.invoiceNumber}</h3>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <p className="text-xs text-slate-500">
+                                    This will generate a final PDF, create a secure public link, and email it directly to <strong>{invoice.client.email || 'the client'}</strong>.
+                                </p>
+                                <div>
+                                    <label className="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Optional Message</label>
+                                    <textarea 
+                                        className="w-full border py-2 px-3 focus:outline-none border-slate-200 focus:border-brand-base text-sm resize-none min-h-[100px]"
+                                        placeholder="Hi there, thanks for your business! Here is the invoice..."
+                                        value={customMessage}
+                                        onChange={e => setCustomMessage(e.target.value)}
+                                        disabled={isSending}
+                                    />
+                                </div>
+                            </div>
+                            <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+                                <Button variant="secondary" onClick={() => setIsMessageModalOpen(false)} disabled={isSending} className="shadow-none text-xs px-4 py-2 bg-white">
+                                    Cancel
+                                </Button>
+                                <Button variant="primary" onClick={handleSend} disabled={isSending || !invoice.client.email} className="shadow-none bg-brand-base hover:bg-brand-hover text-xs px-6 py-2">
+                                    {isSending ? 'Sending...' : 'Send Now'}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
         </div>

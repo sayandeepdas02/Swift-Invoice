@@ -1,4 +1,7 @@
 import Invoice from '../models/Invoice.js';
+import Client from '../models/Client.js';
+import User from '../models/User.js';
+import crypto from 'crypto';
 
 const VALID_STATUSES = ['draft', 'sent', 'viewed', 'awaiting_payment', 'paid'];
 
@@ -44,12 +47,36 @@ export const createInvoice = async (invoiceData, userId) => {
         validateItems(invoiceData.items);
     }
 
+    // Auto-create client seamlessly
+    if (invoiceData.client && invoiceData.client.name && invoiceData.client.email) {
+        try {
+            const existingClient = await Client.findOne({ userId, email: invoiceData.client.email });
+            if (!existingClient) {
+                await Client.create({
+                    userId,
+                    name: invoiceData.client.name,
+                    email: invoiceData.client.email,
+                    address: invoiceData.client.address || ''
+                });
+            }
+        } catch (err) {
+            console.error('Silent client creation failed:', err);
+        }
+    }
+
     const { params, computedItems } = calculateTotals(invoiceData);
+
+    const sequenceUser = await User.findByIdAndUpdate(userId, { $inc: { invoiceCounter: 1 } }, { new: true });
+    const prefix = sequenceUser?.invoicePrefix || 'INV';
+    const num = sequenceUser?.invoiceCounter || 1;
+    const finalInvoiceNumber = `${prefix}-${num.toString().padStart(4, '0')}`;
 
     const newInvoice = new Invoice({
         ...invoiceData,
+        invoiceNumber: finalInvoiceNumber,
         items: computedItems,
         ...params,
+        publicId: crypto.randomBytes(16).toString('hex'),
         status: invoiceData.isDraft ? 'draft' : (invoiceData.status || 'draft'),
         userId
     });
@@ -67,6 +94,23 @@ export const updateInvoice = async (invoiceId, invoiceData, userId) => {
 
     if (!invoiceData.isDraft) {
         validateItems(invoiceData.items);
+    }
+
+    // Auto-create client seamlessly during updates 
+    if (invoiceData.client && invoiceData.client.name && invoiceData.client.email) {
+        try {
+            const existingClient = await Client.findOne({ userId, email: invoiceData.client.email });
+            if (!existingClient) {
+                await Client.create({
+                    userId,
+                    name: invoiceData.client.name,
+                    email: invoiceData.client.email,
+                    address: invoiceData.client.address || ''
+                });
+            }
+        } catch (err) {
+            console.error('Silent client creation failed:', err);
+        }
     }
 
     const { params, computedItems } = calculateTotals(invoiceData);
@@ -114,11 +158,15 @@ export const duplicateInvoice = async (invoiceId, userId) => {
     delete sourceObj.createdAt;
     delete sourceObj.updatedAt;
 
-    const newNumber = `INV-${Math.floor(10000 + Math.random() * 90000)}`;
+    const sequenceUser = await User.findByIdAndUpdate(userId, { $inc: { invoiceCounter: 1 } }, { new: true });
+    const prefix = sequenceUser?.invoicePrefix || 'INV';
+    const num = sequenceUser?.invoiceCounter || 1;
+    const newNumber = `${prefix}-${num.toString().padStart(4, '0')}`;
 
     const duplicate = new Invoice({
         ...sourceObj,
         invoiceNumber: newNumber,
+        publicId: crypto.randomBytes(16).toString('hex'),
         status: 'draft',
         isDraft: true,
         sentAt: null,

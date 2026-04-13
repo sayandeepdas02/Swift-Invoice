@@ -1,5 +1,8 @@
 import * as invoiceService from '../services/invoiceService.js';
 import { generateInvoicePDF } from '../utils/pdfGenerator.js';
+import { sendInvoiceEmail } from '../services/emailService.js';
+import { sendReminder } from '../services/reminderService.js';
+import Invoice from '../models/Invoice.js';
 
 export const createInvoice = async (req, res) => {
     try {
@@ -78,5 +81,104 @@ export const getInvoiceById = async (req, res) => {
         res.json({ success: true, data: invoice, message: 'Invoice fetched successfully' });
     } catch (error) {
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
+    }
+};
+
+export const sendInvoice = async (req, res) => {
+    try {
+        const { message } = req.body;
+        // Verify invoice belongs to user
+        const invoice = await invoiceService.getInvoiceById(req.params.id, req.user._id);
+        
+        // Client needs email
+        if (!invoice.client || !invoice.client.email) {
+            return res.status(400).json({ success: false, data: null, message: 'Client email is missing' });
+        }
+
+        // Generating front-end public URL
+        const frontEndUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const publicUrl = `${frontEndUrl}/invoice/${invoice.publicId}`;
+
+        // Buffer the PDF
+        const pdfBuffer = await generateInvoicePDF(invoice);
+
+        // Send Email
+        await sendInvoiceEmail({
+            to: invoice.client.email,
+            subject: `Invoice #${invoice.invoiceNumber} from ${invoice.sender.companyName || invoice.sender.name}`,
+            message,
+            publicLink: publicUrl,
+            pdfBuffer,
+            invoiceNumber: invoice.invoiceNumber
+        });
+
+        // Update database explicitly 
+        // Note: invoiceService.updateInvoiceStatus doesn't let us pass status easily outside the predefined flow or we could just use it.
+        // Actually, updateInvoiceStatus takes (id, status, userId) which is perfect.
+        const updatedInvoice = await invoiceService.updateInvoiceStatus(invoice._id, 'sent', req.user._id);
+
+        res.json({ success: true, data: updatedInvoice, message: 'Invoice sent successfully' });
+    } catch (error) {
+        console.error('Send Invoice Error:', error);
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
+    }
+};
+
+export const sendManualReminder = async (req, res) => {
+    try {
+        const invoiceRaw = await Invoice.findById(req.params.id);
+        if (!invoiceRaw) throw new Error('Invoice not found', { cause: 404 });
+        if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user._id.toString()) {
+            throw new Error('Not authorized', { cause: 401 });
+        }
+        if (invoiceRaw.status === 'paid' || invoiceRaw.status === 'Paid') {
+            throw new Error('Invoice is already paid', { cause: 400 });
+        }
+
+        const invoice = invoiceService.withOverdue(invoiceRaw);
+        const type = invoice.isOverdue ? 'overdue' : 'upcoming';
+        const updatedInvoice = await sendReminder(invoiceRaw, type);
+
+        res.json({ success: true, data: invoiceService.withOverdue(updatedInvoice), message: 'Reminder sent successfully' });
+    } catch (error) {
+        console.error('Manual Reminder Error:', error);
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
+    }
+};
+
+export const getLastInvoice = async (req, res) => {
+    try {
+        const lastInvoice = await Invoice.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
+        if (!lastInvoice) {
+            return res.status(404).json({ success: false, data: null, message: 'No past invoices found' });
+        }
+        res.json({ success: true, data: invoiceService.withOverdue(lastInvoice), message: 'Last invoice loaded' });
+    } catch (error) {
+        res.status(500).json({ success: false, data: null, message: error.message });
+    }
+};
+
+export const getPublicInvoiceById = async (req, res) => {
+    try {
+        // Query by publicId, bypassing protect
+        const invoiceRaw = await Invoice.findOne({ publicId: req.params.publicId });
+        if (!invoiceRaw) {
+            return res.status(404).json({ success: false, data: null, message: 'Invoice not found' });
+        }
+
+        // Optional viewedAt stamping
+        if (!invoiceRaw.viewedAt && invoiceRaw.status !== 'paid') {
+            invoiceRaw.viewedAt = new Date();
+            invoiceRaw.status = 'viewed';
+            await invoiceRaw.save();
+        }
+
+        // Apply dynamic fields via service utility
+        const invoice = invoiceService.withOverdue(invoiceRaw);
+
+        res.json({ success: true, data: invoice, message: 'Public invoice fetched successfully' });
+    } catch (error) {
+        console.error('Public Invoice Error:', error);
+        res.status(500).json({ success: false, data: null, message: error.message });
     }
 };

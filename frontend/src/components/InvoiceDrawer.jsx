@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, CheckCircle, Copy, Trash2, ExternalLink, Calendar, Clock, AlertTriangle, Send, User, FileText } from 'lucide-react';
+import { X, Download, CheckCircle, Copy, Trash2, ExternalLink, Calendar, Clock, AlertTriangle, Send, User, FileText, MessageCircle, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import api from '../lib/api';
 import { toast } from 'react-hot-toast';
@@ -91,6 +91,18 @@ const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate }) =>
     };
 
     const fmtDate = (d) => d ? format(new Date(d), 'dd MMM yyyy') : '—';
+
+    const publicUrl = `${window.location.origin}/p/${invoice.publicId}`;
+
+    const handleCopyLink = () => {
+        navigator.clipboard.writeText(publicUrl);
+        toast.success('Public link copied!');
+    };
+
+    const handleWhatsApp = () => {
+        const text = encodeURIComponent(`Here is your invoice from ${invoice.sender.companyName || invoice.sender.name}: ${publicUrl}`);
+        window.open(`https://wa.me/?text=${text}`, '_blank');
+    };
 
     return (
         <AnimatePresence>
@@ -216,7 +228,8 @@ const InvoiceDrawer = ({ invoice, onClose, onUpdate, onDelete, onDuplicate }) =>
                     {/* Footer */}
                     <div className="p-4 bg-white border-t border-border-base shrink-0 flex gap-2 flex-wrap">
                         <Button variant="secondary" onClick={handleDownload} className="flex-1 text-xs py-2 shadow-none"><Download size={14} className="mr-1.5" /> PDF</Button>
-                        <Button variant="secondary" onClick={handleDuplicate} className="flex-1 text-xs py-2 shadow-none"><Copy size={14} className="mr-1.5" /> Duplicate</Button>
+                        <Button variant="secondary" onClick={handleCopyLink} className="flex-1 text-xs py-2 shadow-none"><Copy size={14} className="mr-1.5" /> Link</Button>
+                        <Button variant="secondary" onClick={handleWhatsApp} className="flex-1 text-xs py-2 shadow-none text-green-600 border-green-200 hover:bg-green-50"><MessageCircle size={14} className="mr-1.5" /> Share</Button>
                         <Button variant="secondary" onClick={handleDelete} className="text-xs py-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 shadow-none"><Trash2 size={14} /></Button>
                         
                         {invoice.status !== 'paid' && (
