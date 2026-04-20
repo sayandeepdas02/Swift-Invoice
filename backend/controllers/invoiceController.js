@@ -17,8 +17,8 @@ const processImages = async (body) => {
         const dataBuffer = Buffer.from(matches[2], 'base64');
         const originalSizeKB = dataBuffer.length / 1024;
 
-        if (originalSizeKB > 500) {
-            throw new Error(`Image size exceeds safe threshold of 500KB (Actual: ${originalSizeKB.toFixed(2)}KB). Please upload a smaller image.`);
+        if (originalSizeKB > 2048) {
+            throw new Error(`Image size exceeds safe threshold of 2MB (Actual: ${originalSizeKB.toFixed(2)}KB). Please upload a smaller image.`);
         }
 
         const compressed = await sharp(dataBuffer)

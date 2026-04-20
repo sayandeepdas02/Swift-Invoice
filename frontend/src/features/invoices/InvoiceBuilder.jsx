@@ -113,6 +113,8 @@ const InvoiceBuilder = () => {
     const fetchInvoice = async (invoiceId) => {
         try {
             const data = await invoiceApi.getById(invoiceId);
+            if (data.issueDate) data.issueDate = data.issueDate.split('T')[0];
+            if (data.dueDate) data.dueDate = data.dueDate.split('T')[0];
             setInvoice(data);
             if (data.sender?.logo) setLogoPreview(data.sender.logo);
             if (data.qrCodeImage) setQrPreview(data.qrCodeImage);
