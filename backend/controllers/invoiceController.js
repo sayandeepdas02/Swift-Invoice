@@ -3,6 +3,8 @@ import { generateInvoicePDF } from '../utils/pdfGenerator.js';
 import { sendInvoiceEmail } from '../services/emailService.js';
 import { sendReminder } from '../services/reminderService.js';
 import Invoice from '../models/Invoice.js';
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 export const createInvoice = async (req, res) => {
     try {
@@ -87,24 +89,34 @@ export const getInvoiceById = async (req, res) => {
     }
 };
 
-    export const sendInvoice = async (req, res) => {
+export const sendInvoice = async (req, res) => {
     try {
-        const { message, token } = req.body;
-        // Verify invoice belongs to user
-        const invoice = await invoiceService.getInvoiceById(req.params.id, req.user._id);
+        const { message } = req.body;
+        // Verify invoice belongs to user natively grabbing document to mutate
+        const invoiceRaw = await Invoice.findById(req.params.id);
+        if (!invoiceRaw) throw new Error('Invoice not found', { cause: 404 });
+        if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user._id.toString()) {
+            throw new Error('Not authorized', { cause: 401 });
+        }
         
         // Client needs email
-        if (!invoice.client || !invoice.client.email) {
+        if (!invoiceRaw.client || !invoiceRaw.client.email) {
             return res.status(400).json({ success: false, data: null, message: 'Client email is missing' });
         }
 
-        if (!token) {
-            return res.status(400).json({ success: false, data: null, message: 'Public token is required to generate the email link' });
-        }
+        // Generate a new secure token dynamically to ensure emails can be sent at any time independently
+        const publicTokenRaw = crypto.randomBytes(32).toString('hex');
+        const publicTokenHash = await bcrypt.hash(publicTokenRaw, 10);
+        
+        invoiceRaw.publicTokenHash = publicTokenHash;
+        invoiceRaw.publicTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+        await invoiceRaw.save();
+
+        const invoice = invoiceService.withOverdue(invoiceRaw);
 
         // Generating front-end public URL
         const frontEndUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        const publicUrl = `${frontEndUrl}/invoice/${invoice.publicId}?token=${token}`;
+        const publicUrl = `${frontEndUrl}/invoice/${invoice.publicId}?token=${publicTokenRaw}`;
 
         // Buffer the PDF
         const pdfBuffer = await generateInvoicePDF(invoice);

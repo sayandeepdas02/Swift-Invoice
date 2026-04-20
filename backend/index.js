@@ -54,7 +54,7 @@ const legacyApiLimiter = rateLimit({
 // Strictly raw parsing for webhooks to preserve signature integrity
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
 app.use(cookieParser());
 app.use('/api', legacyApiLimiter); // Protect general endpoints
 

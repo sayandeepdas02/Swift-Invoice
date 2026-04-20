@@ -177,15 +177,19 @@ const InvoiceBuilder = () => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 2 * 1024 * 1024) { showToast('File size must be less than 2MB', 'error'); return; }
-            const t = toast.loading('Uploading logo...');
-            try {
-                const url = await uploadApi.uploadImage(file);
-                setLogoPreview(url);
-                updateNestedInvoice('sender', 'logo', url);
-                toast.success('Uploaded logo successfully', { id: t });
-            } catch (err) {
-                toast.error(err.message || 'Logo upload failed', { id: t });
-            }
+            if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) { showToast('Only JPG, JPEG, and PNG images are allowed', 'error'); return; }
+            const t = toast.loading('Processing logo...');
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result;
+                setLogoPreview(base64String);
+                updateNestedInvoice('sender', 'logo', base64String);
+                toast.success('Logo embedded successfully', { id: t });
+            };
+            reader.onerror = () => {
+                toast.error('Failed to process logo', { id: t });
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -193,15 +197,19 @@ const InvoiceBuilder = () => {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 2 * 1024 * 1024) { showToast('File size must be less than 2MB', 'error'); return; }
-            const t = toast.loading('Uploading QR...');
-            try {
-                const url = await uploadApi.uploadImage(file);
-                setQrPreview(url);
-                updateInvoice('qrCodeImage', url);
-                toast.success('Uploaded QR code successfully', { id: t });
-            } catch (err) {
-                toast.error(err.message || 'QR upload failed', { id: t });
-            }
+            if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) { showToast('Only JPG, JPEG, and PNG images are allowed', 'error'); return; }
+            const t = toast.loading('Processing QR...');
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result;
+                setQrPreview(base64String);
+                updateInvoice('qrCodeImage', base64String);
+                toast.success('QR Code embedded successfully', { id: t });
+            };
+            reader.onerror = () => {
+                toast.error('Failed to process QR code', { id: t });
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -513,7 +521,7 @@ const InvoiceBuilder = () => {
                                     <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors text-slate-400 hover:border-brand-base w-fit mt-1">
                                         <Plus className="w-3.5 h-3.5" />
                                         <span className="text-[10px] font-bold tracking-widest uppercase">Upload QR</span>
-                                        <input type="file" accept="image/*" onChange={handleQrUpload} className="hidden" />
+                                        <input type="file" accept="image/jpeg, image/png, image/jpg" onChange={handleQrUpload} className="hidden" />
                                     </label>
                                 )}
                             </div>

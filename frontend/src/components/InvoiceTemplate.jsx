@@ -46,6 +46,7 @@ const InvoiceTemplate = ({ invoice, subtotal, taxAmount, totalAmount, currencySy
                             src={invoice.sender.logo}
                             alt="Company Logo"
                             style={{ maxWidth: '140px', maxHeight: '72px', objectFit: 'contain', display: 'block', marginBottom: '10px' }}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                     )}
                     <h2 style={{ margin: 0, fontWeight: 900, fontSize: '20px', letterSpacing: '-0.5px' }}>
@@ -168,6 +169,7 @@ const InvoiceTemplate = ({ invoice, subtotal, taxAmount, totalAmount, currencySy
                             src={invoice.qrCodeImage}
                             alt="Payment QR"
                             style={{ width: '100px', height: '100px', objectFit: 'contain', border: '1px solid #eee', borderRadius: '8px', padding: '4px' }}
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         />
                     </div>
                 )}

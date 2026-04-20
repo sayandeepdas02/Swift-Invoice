@@ -9,6 +9,40 @@ export const generateInvoicePDF = async (invoiceData) => {
   const symbol = currencySymbols[invoiceData.currency] || invoiceData.currency;
   const sanitize = (text) => sanitizeHtml(text || '', { allowedTags: [], allowedAttributes: {} });
 
+  const resolveImage = async (url) => {
+    if (!url) return '';
+    if (url.startsWith('data:image')) {
+        console.log('[PDF] Image is already Base64');
+        return url;
+    }
+    console.log('[PDF] Image is URL, fetching and securely validating:', url);
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) {
+            console.log('[PDF] Fetch failed, securely dropping image:', response.status);
+            return '';
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.startsWith('image/')) {
+            console.log('[PDF] URL is not an image MIME type, completely dropping.');
+            return '';
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        return `data:${contentType};base64,${buffer.toString('base64')}`;
+    } catch (e) {
+        console.log('[PDF] Image fetch error, completely dropping:', e.message);
+        return '';
+    }
+  };
+
+  const resolvedLogo = await resolveImage(invoiceData.sender.logo);
+  const resolvedQr = await resolveImage(invoiceData.qrCodeImage);
+
   // HTML Template for the Invoice
   const htmlContent = `
     <!DOCTYPE html>
@@ -38,7 +72,7 @@ export const generateInvoicePDF = async (invoiceData) => {
     <body>
       <div class="header">
         <div class="logo-container">
-          ${invoiceData.sender.logo ? `<img src="${invoiceData.sender.logo}" class="logo" alt="Company Logo">` : ''}
+          ${resolvedLogo ? `<img src="${resolvedLogo}" class="logo" alt="Company Logo">` : ''}
           ${invoiceData.sender.companyName ? `<h2 style="margin:0; font-weight:900; margin-top: 10px;">${sanitize(invoiceData.sender.companyName)}</h2>` : `<h2 style="margin:0; font-weight:900;">SWIFT INVOICE</h2>`}
         </div>
         <div class="invoice-details">
@@ -114,10 +148,10 @@ export const generateInvoicePDF = async (invoiceData) => {
           <p>${sanitize(invoiceData.notes) || 'Thank you for your business!'}</p>
           ${invoiceData.paymentQr ? `<p style="margin-top: 10px;"><strong>UPI ID:</strong> ${sanitize(invoiceData.paymentQr)}</p>` : ''}
         </div>
-        ${invoiceData.qrCodeImage ? `
+        ${resolvedQr ? `
           <div style="text-align: center;">
             <div class="section-title">Scan to Pay</div>
-            <img src="${invoiceData.qrCodeImage}" class="qr-code" alt="Payment QR Code">
+            <img src="${resolvedQr}" class="qr-code" alt="Payment QR Code">
           </div>
         ` : ''}
       </div>
