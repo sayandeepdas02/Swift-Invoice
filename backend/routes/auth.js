@@ -1,5 +1,5 @@
 import express from 'express';
-import { register, login, logout, getMe, googleLogin } from '../controllers/authController.js';
+import { register, login, logout, getMe, googleLogin, inviteTeamMember } from '../controllers/authController.js';
 import { protect } from '../middleware/authMiddleware.js';
 import rateLimit from 'express-rate-limit';
 
@@ -16,5 +16,6 @@ router.post('/login', authLimiter, login);
 router.post('/google', authLimiter, googleLogin);
 router.post('/logout', logout);
 router.get('/me', protect, getMe);
+router.post('/invite', protect, inviteTeamMember);
 
 export default router;

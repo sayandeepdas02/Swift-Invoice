@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { settingsApi } from '../services/api/settingsApi';
 import { uploadApi } from '../services/api/uploadApi';
+import { authApi } from '../services/api/authApi';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
-import { Save, Building2, Palette, Sliders, Upload, Trash2 } from 'lucide-react';
+import { Save, Building2, Palette, Sliders, Upload, Trash2, Users, Send } from 'lucide-react';
 
 const Settings = () => {
-    const { fetchUserProfile } = useAuth(); // If we need to sync auth state
+    const { fetchUserProfile } = useAuth();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [inviteEmail, setInviteEmail] = useState('');
+    const [inviting, setInviting] = useState(false);
     
     const [formData, setFormData] = useState({
         businessName: '',
@@ -222,6 +225,51 @@ const Settings = () => {
                                 maxLength={6}
                             />
                             <p className="text-xs text-slate-400 mt-2">Example: <strong>{formData.invoicePrefix}-0001</strong></p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* section: Team Management */}
+                <section className="bg-white border border-slate-200 shadow-sm">
+                    <div className="px-6 py-4 border-b border-slate-200 flex items-center gap-2">
+                        <Users size={16} className="text-slate-400" />
+                        <h2 className="text-sm font-bold text-slate-900 tracking-tight">Team Members</h2>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <p className="text-sm text-slate-500">Invite teammates to your workspace. They'll share access to all invoices and clients.</p>
+                        <div className="flex items-end gap-3">
+                            <div className="flex-1">
+                                <label className="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-2">Email Address</label>
+                                <input
+                                    type="email"
+                                    value={inviteEmail}
+                                    onChange={(e) => setInviteEmail(e.target.value)}
+                                    placeholder="colleague@company.com"
+                                    className="w-full border-b border-slate-300 py-2 focus:border-brand-base focus:outline-none text-sm text-slate-900 placeholder:text-slate-300 transition-colors bg-transparent"
+                                />
+                            </div>
+                            <Button
+                                type="button"
+                                variant="primary"
+                                disabled={inviting || !inviteEmail}
+                                onClick={async () => {
+                                    if (!inviteEmail) return;
+                                    setInviting(true);
+                                    try {
+                                        await authApi.inviteTeamMember(inviteEmail);
+                                        toast.success(`Invitation sent to ${inviteEmail}`);
+                                        setInviteEmail('');
+                                    } catch (err) {
+                                        toast.error(err.message || 'Failed to send invitation');
+                                    } finally {
+                                        setInviting(false);
+                                    }
+                                }}
+                                className="shadow-none bg-brand-base hover:bg-brand-hover border-none px-5 py-2 text-sm font-semibold tracking-tight whitespace-nowrap"
+                            >
+                                <Send size={14} className="mr-2" />
+                                {inviting ? 'Sending...' : 'Send Invite'}
+                            </Button>
                         </div>
                     </div>
                 </section>

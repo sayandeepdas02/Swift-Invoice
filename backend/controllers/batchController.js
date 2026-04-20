@@ -7,7 +7,7 @@ import { sendReminder } from '../services/reminderService.js';
 export const processBatch = async (req, res) => {
     try {
         const { action, invoiceIds } = req.body;
-        const userId = req.user._id;
+        const userId = req.user.workspaceId;
 
         if (!action || !Array.isArray(invoiceIds) || invoiceIds.length === 0) {
             return res.status(400).json({ success: false, message: 'Invalid payload mapping' });

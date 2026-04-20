@@ -8,6 +8,8 @@ const userSchema = new mongoose.Schema({
     mobile: { type: String, default: 'Not Provided' },
     isGoogleAuth: { type: Boolean, default: false },
     googleId: { type: String, sparse: true, unique: true },
+    role: { type: String, enum: ['owner', 'member'], default: 'owner' },
+    parentUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     businessName: { type: String, default: '' },
     businessEmail: { type: String, default: '' },
     businessAddress: { type: String, default: '' },

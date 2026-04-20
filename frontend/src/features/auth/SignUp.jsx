@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Check, User } from 'lucide-react';
@@ -10,6 +10,8 @@ const SignUp = () => {
     const [isLoading, setIsLoading] = useState(false);
     const { register, loginWithGoogle } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const inviteToken = searchParams.get('inviteToken');
 
     const handleGoogleSignUp = useGoogleLogin({
         onSuccess: async (tokenResponse) => {
@@ -28,7 +30,8 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        const success = await register(formData);
+        const payload = inviteToken ? { ...formData, inviteToken } : formData;
+        const success = await register(payload);
         setIsLoading(false);
         if (success) navigate('/dashboard');
     };
@@ -40,12 +43,17 @@ const SignUp = () => {
                 {/* LEFT SIDE (FORM) */}
                 <div className="flex-1 flex flex-col justify-center items-center px-6 lg:px-8 py-12 relative z-10 lg:max-w-[50%] w-full">
                     <div className="w-full max-w-[420px] space-y-8">
+                        {inviteToken && (
+                            <div className="bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-800 font-medium tracking-tight">
+                                🎉 You've been invited to join a team workspace. Create your account below to get started.
+                            </div>
+                        )}
                         <div>
                             <h2 className="text-3xl font-semibold text-slate-900 tracking-tight">
-                                Create your account
+                                {inviteToken ? 'Join your team' : 'Create your account'}
                             </h2>
                             <p className="mt-2 text-sm text-slate-500 tracking-tight">
-                                Start generating professional invoices in seconds.
+                                {inviteToken ? 'Set up your profile to access shared invoices and clients.' : 'Start generating professional invoices in seconds.'}
                             </p>
                         </div>
 

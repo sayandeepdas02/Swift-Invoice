@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, User, FileText, TrendingUp, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { invoiceApi } from '../../services/api/invoiceApi';
 import { clientApi } from '../../services/api/clientApi';
 import { toast } from 'react-hot-toast';
 import Button from '../../components/ui/Button';
@@ -132,7 +131,6 @@ const ClientDrawer = ({ client, onClose, onSave }) => {
 
 const ClientsList = () => {
     const [clients, setClients] = useState([]);
-    const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -141,11 +139,7 @@ const ClientsList = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [invData, clientData] = await Promise.all([
-                    invoiceApi.getAll(),
-                    clientApi.getAll()
-                ]);
-                setInvoices(invData);
+                const clientData = await clientApi.getAll();
                 setClients(clientData);
             } catch (error) {
                 toast.error('Failed to load client data');
@@ -157,35 +151,7 @@ const ClientsList = () => {
         fetchData();
     }, []);
 
-    const clientsAggregated = useMemo(() => {
-        const map = new Map();
-        
-        // Base seed from backend
-        clients.forEach(c => {
-            map.set(c._id.toString(), { ...c, totalInvoices: 0, totalRevenue: 0 });
-        });
-
-        // Overlay with live invoice data for totals
-        invoices.forEach(inv => {
-            if (!inv.client || (!inv.client.name && !inv.client.email)) return;
-            const targetEmail = inv.client.email?.toLowerCase();
-            
-            let matchedClient = clients.find(c => c.email.toLowerCase() === targetEmail);
-            
-            if (matchedClient) {
-                const record = map.get(matchedClient._id.toString());
-                record.totalInvoices += 1;
-                if (inv.status === 'paid' || inv.status === 'Paid') {
-                    record.totalRevenue += (inv.totalAmount || 0);
-                }
-                map.set(matchedClient._id.toString(), record);
-            }
-        });
-
-        return Array.from(map.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
-    }, [invoices, clients]);
-
-    const filteredClients = clientsAggregated.filter(c => 
+    const filteredClients = clients.filter(c => 
         c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
         c.email?.toLowerCase().includes(searchTerm.toLowerCase())
     );

@@ -2,7 +2,7 @@ import Invoice from '../models/Invoice.js';
 
 export const getDashboardMetrics = async (req, res) => {
     try {
-        const userId = req.user._id;
+        const userId = req.user.workspaceId;
         const now = new Date();
         const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -99,7 +99,7 @@ import { logger } from '../services/logger.js';
 export const getAdvancedMetrics = async (req, res) => {
     try {
         // Need string to ObjectId transformation natively to properly pass aggregation boundaries
-        const userId = new mongoose.Types.ObjectId(req.user._id);
+        const userId = new mongoose.Types.ObjectId(req.user.workspaceId);
         const range = req.query.range || '30d';
         let startDate = new Date();
         
@@ -169,7 +169,7 @@ export const getAdvancedMetrics = async (req, res) => {
             }
         });
     } catch (error) {
-        logger.error('advanced_analytics_failed', { error: error.message, userId: req.user._id });
+        logger.error('advanced_analytics_failed', { error: error.message, userId: req.user.workspaceId });
         res.status(500).json({ success: false, message: 'Advanced aggregation failed natively' });
     }
 };

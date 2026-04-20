@@ -1,5 +1,5 @@
 import * as authService from '../services/authService.js';
-
+import { sendEmail } from '../services/emailService.js';
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -97,5 +97,33 @@ export const googleLogin = async (req, res) => {
     } catch (error) {
         console.error('Google Login Error:', error);
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message || 'Google Auth Failed' });
+    }
+};
+
+export const inviteTeamMember = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) throw new Error('Email is required to dispatch invite', { cause: 400 });
+
+        const inviteToken = authService.generateInviteToken(req.user._id, email);
+        const frontEndUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const inviteLink = `${frontEndUrl}/auth/register?inviteToken=${inviteToken}`;
+
+        const html = `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+                <h2>You've been invited!</h2>
+                <p><strong>${req.user.name}</strong> has invited you to join their Swift Invoice workspace.</p>
+                <br />
+                <a href="${inviteLink}" style="padding: 12px 24px; background: #2563eb; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold;">Accept Invitation & Join Team</a>
+                <p style="margin-top: 32px; font-size: 14px; color: #666;">If you didn't expect this, you can safely ignore this email.</p>
+            </div>
+        `;
+
+        await sendEmail({ to: email, subject: `You're invited to join ${req.user.name}'s Workspace`, html });
+
+        res.json({ success: true, message: 'Invitation dispatched securely' });
+    } catch (error) {
+        console.error('Invite Dispatch Error:', error);
+        res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
     }
 };

@@ -9,7 +9,11 @@ export const protect = async (req, res, next) => {
     if (token) {
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
+            const user = await User.findById(decoded.id).select('-password');
+            if (user) {
+                user.workspaceId = user.parentUserId || user._id; // Global RBAC bypass routing
+                req.user = user;
+            }
             next();
         } catch (error) {
             console.error(error);

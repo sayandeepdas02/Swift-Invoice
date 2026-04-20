@@ -47,6 +47,7 @@ function App() {
           <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
           <Route path="/signin" element={<PublicLayout><SignIn /></PublicLayout>} />
           <Route path="/signup" element={<PublicLayout><SignUp /></PublicLayout>} />
+          <Route path="/auth/register" element={<PublicLayout><SignUp /></PublicLayout>} />
           <Route path="/invoice/:publicId" element={<PublicInvoice />} />
 
           {/* Authenticated SaaS Routes */}

@@ -2,7 +2,7 @@ import User from '../models/User.js';
 
 export const getSettings = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('businessName businessEmail businessAddress logoUrl defaultCurrency invoicePrefix invoiceCounter taxType defaultTaxRate defaultTerms dateFormat');
+        const user = await User.findById(req.user.workspaceId).select('businessName businessEmail businessAddress logoUrl defaultCurrency invoicePrefix invoiceCounter taxType defaultTaxRate defaultTerms dateFormat');
         if (!user) {
             return res.status(404).json({ success: false, data: null, message: 'User not found' });
         }
@@ -24,7 +24,7 @@ export const updateSettings = async (req, res) => {
         });
 
         const user = await User.findByIdAndUpdate(
-            req.user._id,
+            req.user.workspaceId,
             { $set: updates },
             { new: true, runValidators: true }
         ).select('-password');

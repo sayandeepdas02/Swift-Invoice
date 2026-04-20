@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs';
 
 export const createInvoice = async (req, res) => {
     try {
-        const invoice = await invoiceService.createInvoice(req.body, req.user._id);
+        const invoice = await invoiceService.createInvoice(req.body, req.user.workspaceId);
         res.status(201).json({ success: true, data: invoice, message: 'Invoice created successfully' });
     } catch (error) {
         res.status(error.cause || 400).json({ success: false, data: null, message: error.message });
@@ -17,7 +17,7 @@ export const createInvoice = async (req, res) => {
 
 export const updateInvoice = async (req, res) => {
     try {
-        const invoice = await invoiceService.updateInvoice(req.params.id, req.body, req.user._id);
+        const invoice = await invoiceService.updateInvoice(req.params.id, req.body, req.user.workspaceId);
         res.json({ success: true, data: invoice, message: 'Invoice updated successfully' });
     } catch (error) {
         res.status(error.cause || 400).json({ success: false, data: null, message: error.message });
@@ -26,7 +26,7 @@ export const updateInvoice = async (req, res) => {
 
 export const deleteInvoice = async (req, res) => {
     try {
-        await invoiceService.deleteInvoice(req.params.id, req.user._id);
+        await invoiceService.deleteInvoice(req.params.id, req.user.workspaceId);
         res.json({ success: true, data: null, message: 'Invoice removed successfully' });
     } catch (error) {
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
@@ -35,7 +35,7 @@ export const deleteInvoice = async (req, res) => {
 
 export const updateInvoiceStatus = async (req, res) => {
     try {
-        const invoice = await invoiceService.updateInvoiceStatus(req.params.id, req.body.status, req.user._id);
+        const invoice = await invoiceService.updateInvoiceStatus(req.params.id, req.body.status, req.user.workspaceId);
         res.json({ success: true, data: invoice, message: 'Invoice status updated successfully' });
     } catch (error) {
         res.status(error.cause || 400).json({ success: false, data: null, message: error.message });
@@ -44,7 +44,7 @@ export const updateInvoiceStatus = async (req, res) => {
 
 export const duplicateInvoice = async (req, res) => {
     try {
-        const duplicate = await invoiceService.duplicateInvoice(req.params.id, req.user._id);
+        const duplicate = await invoiceService.duplicateInvoice(req.params.id, req.user.workspaceId);
         res.status(201).json({ success: true, data: duplicate, message: 'Invoice duplicated successfully' });
     } catch (error) {
         res.status(error.cause || 400).json({ success: false, data: null, message: error.message });
@@ -56,7 +56,7 @@ export const downloadInvoice = async (req, res) => {
         // Must use the model directly here or rely on the service fetching standard object
         // getInvoiceById returns a leaned object or virtuals, but PDF gen needs raw props sometimes
         // Actually, the service returns the Mongoose document with dynamic isOverdue depending if it used `.toObject()`.
-        const invoice = await invoiceService.getInvoiceById(req.params.id, req.user._id);
+        const invoice = await invoiceService.getInvoiceById(req.params.id, req.user.workspaceId);
         
         const pdfBuffer = await generateInvoicePDF(invoice);
 
@@ -73,7 +73,7 @@ export const downloadInvoice = async (req, res) => {
 
 export const getInvoices = async (req, res) => {
     try {
-        const invoices = await invoiceService.getInvoices(req.user._id);
+        const invoices = await invoiceService.getInvoices(req.user.workspaceId);
         res.json({ success: true, data: invoices, message: 'Invoices fetched successfully' });
     } catch (error) {
         res.status(500).json({ success: false, data: null, message: error.message });
@@ -82,7 +82,7 @@ export const getInvoices = async (req, res) => {
 
 export const getInvoiceById = async (req, res) => {
     try {
-        const invoice = await invoiceService.getInvoiceById(req.params.id, req.user._id);
+        const invoice = await invoiceService.getInvoiceById(req.params.id, req.user.workspaceId);
         res.json({ success: true, data: invoice, message: 'Invoice fetched successfully' });
     } catch (error) {
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
@@ -95,7 +95,7 @@ export const sendInvoice = async (req, res) => {
         // Verify invoice belongs to user natively grabbing document to mutate
         const invoiceRaw = await Invoice.findById(req.params.id);
         if (!invoiceRaw) throw new Error('Invoice not found', { cause: 404 });
-        if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user._id.toString()) {
+        if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user.workspaceId.toString()) {
             throw new Error('Not authorized', { cause: 401 });
         }
         
@@ -132,9 +132,9 @@ export const sendInvoice = async (req, res) => {
         });
 
         // Update database explicitly 
-        const updatedInvoice = await invoiceService.updateInvoiceStatus(invoice._id, 'sent', req.user._id);
+        const updatedInvoice = await invoiceService.updateInvoiceStatus(invoice._id, 'sent', req.user.workspaceId);
 
-        logActivity(req.user._id, invoice._id, 'SENT', { targetEmail: invoice.client.email });
+        logActivity(req.user.workspaceId, invoice._id, 'SENT', { targetEmail: invoice.client.email });
 
         res.json({ success: true, data: updatedInvoice, message: 'Invoice sent successfully' });
     } catch (error) {
@@ -147,7 +147,7 @@ export const sendManualReminder = async (req, res) => {
     try {
         const invoiceRaw = await Invoice.findById(req.params.id);
         if (!invoiceRaw) throw new Error('Invoice not found', { cause: 404 });
-        if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user._id.toString()) {
+        if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user.workspaceId.toString()) {
             throw new Error('Not authorized', { cause: 401 });
         }
         if (invoiceRaw.status === 'paid' || invoiceRaw.status === 'Paid') {
@@ -167,7 +167,7 @@ export const sendManualReminder = async (req, res) => {
 
 export const getLastInvoice = async (req, res) => {
     try {
-        const lastInvoice = await Invoice.findOne({ userId: req.user._id }).sort({ createdAt: -1 });
+        const lastInvoice = await Invoice.findOne({ userId: req.user.workspaceId }).sort({ createdAt: -1 });
         if (!lastInvoice) {
             return res.status(404).json({ success: false, data: null, message: 'No past invoices found' });
         }

@@ -12,7 +12,7 @@ export const generateToken = (id) => {
 };
 
 export const registerUser = async (userData) => {
-    const { name, email, password, mobile } = userData;
+    const { name, email, password, mobile, inviteToken } = userData;
 
     if (!name || !email || !password) {
         throw new Error('Name, email, and password are required', { cause: 400 });
@@ -23,11 +23,27 @@ export const registerUser = async (userData) => {
         throw new Error('User already exists', { cause: 400 });
     }
 
+    let parentUserId = null;
+    let role = 'owner';
+
+    if (inviteToken) {
+        try {
+            const decoded = jwt.verify(inviteToken, process.env.JWT_SECRET);
+            if (decoded.email.toLowerCase() !== email.toLowerCase()) throw new Error('Invite email mismatch');
+            parentUserId = decoded.inviterId;
+            role = 'member';
+        } catch (e) {
+            throw new Error('Invalid or expired invite token', { cause: 400 });
+        }
+    }
+
     const user = await User.create({
         name,
         email,
         password,
-        mobile: mobile || 'Not Provided'
+        mobile: mobile || 'Not Provided',
+        parentUserId,
+        role
     });
 
     if (!user) {
@@ -94,4 +110,8 @@ export const googleLoginUser = async (accessToken) => {
     const token = generateToken(user._id);
 
     return { user, token };
+};
+
+export const generateInviteToken = (inviterId, email) => {
+    return jwt.sign({ inviterId, email }, process.env.JWT_SECRET, { expiresIn: '7d' });
 };

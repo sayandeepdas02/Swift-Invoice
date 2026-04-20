@@ -29,5 +29,11 @@ export const authApi = {
         const { data } = await api.get('/api/auth/me');
         if (!data.success) throw new Error(data.message);
         return data.data;
+    },
+
+    inviteTeamMember: async (email) => {
+        const { data } = await api.post('/api/auth/invite', { email });
+        if (!data.success) throw new Error(data.message);
+        return data;
     }
 };

@@ -2,7 +2,7 @@ import ServiceItem from '../models/ServiceItem.js';
 
 export const getServices = async (req, res) => {
     try {
-        const services = await ServiceItem.find({ userId: req.user._id }).sort({ name: 1 });
+        const services = await ServiceItem.find({ userId: req.user.workspaceId }).sort({ name: 1 });
         res.json({ success: true, data: services, message: 'Services fetched successfully' });
     } catch (error) {
         res.status(500).json({ success: false, data: null, message: error.message });
@@ -16,13 +16,13 @@ export const createService = async (req, res) => {
             return res.status(400).json({ success: false, data: null, message: 'Name and price are required' });
         }
 
-        const serviceExists = await ServiceItem.findOne({ userId: req.user._id, name });
+        const serviceExists = await ServiceItem.findOne({ userId: req.user.workspaceId, name });
         if (serviceExists) {
             return res.status(400).json({ success: false, data: null, message: 'Service with this name already exists' });
         }
 
         const service = await ServiceItem.create({
-            userId: req.user._id,
+            userId: req.user.workspaceId,
             name,
             description,
             price
@@ -36,7 +36,7 @@ export const createService = async (req, res) => {
 
 export const deleteService = async (req, res) => {
     try {
-        const service = await ServiceItem.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+        const service = await ServiceItem.findOneAndDelete({ _id: req.params.id, userId: req.user.workspaceId });
         if (!service) {
             return res.status(404).json({ success: false, data: null, message: 'Service not found' });
         }
