@@ -17,15 +17,18 @@
         "dotenv": "^16.3.1",
         "express": "^4.18.2",
         "express-rate-limit": "^8.3.2",
+        "express-validator": "^7.3.2",
         "google-auth-library": "^10.6.2",
         "jsonwebtoken": "^9.0.2",
         "mongoose": "^8.0.3",
         "multer": "^1.4.5-lts.1",
         "node-cron": "^4.2.1",
-        "puppeteer-core": "^24.40.0",
+        "puppeteer": "^24.41.0",
         "qrcode": "^1.5.3",
+        "razorpay": "^2.9.2",
         "resend": "^6.11.0",
-        "sanitize-html": "^2.17.2"
+        "sanitize-html": "^2.17.2",
+        "uuid": "^9.0.1"
     },
     "devDependencies": {
         "nodemon": "^3.0.2"

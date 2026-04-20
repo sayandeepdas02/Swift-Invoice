@@ -47,7 +47,6 @@ const ClientDrawer = ({ client, onClose, onSave }) => {
                     initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 250 }}
                     onClick={e => e.stopPropagation()}
                 >
-                >
                     <div className="flex flex-col border-b border-slate-200 shrink-0">
                         <div className="flex items-center justify-between p-6 pb-4">
                             <h2 className="text-base font-bold text-slate-900 tracking-tight">{client ? 'Client Details' : 'New Client'}</h2>

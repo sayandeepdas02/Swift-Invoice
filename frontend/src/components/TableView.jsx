@@ -2,29 +2,19 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronUp, ChevronDown, ChevronsUpDown, AlertTriangle, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
+import Card from './ui/Card';
+import Badge from './ui/Badge';
 
 const CURRENCIES = { USD: '$', EUR: '€', GBP: '£', INR: '₹', AUD: 'A$', CAD: 'C$', SGD: 'S$' };
 const currSym = (code) => CURRENCIES[code] || code;
 
 const PAGE_SIZE = 25;
 
-const STATUS_STYLES = {
-    draft: 'bg-slate-100 text-slate-600',
-    pending: 'bg-yellow-50 text-yellow-700',
-    sent: 'bg-yellow-50 text-yellow-700', // Map legacy to pending
-    paid: 'bg-emerald-50 text-emerald-700',
-    overdue: 'bg-red-50 text-red-600',
-};
-
-const STATUS_LABELS = {
-    draft: 'Draft', pending: 'Pending', sent: 'Pending', paid: 'Paid', overdue: 'Overdue'
-};
-
 const computeOverdue = (inv) => !inv.paidAt && inv.dueDate && new Date() > new Date(inv.dueDate);
 
 const SortIcon = ({ field, sortField, sortDir }) => {
     if (sortField !== field) return <ChevronsUpDown size={12} className="text-slate-300" />;
-    return sortDir === 'asc' ? <ChevronUp size={12} className="text-text-primary" /> : <ChevronDown size={12} className="text-text-primary" />;
+    return sortDir === 'asc' ? <ChevronUp size={12} className="text-slate-900" /> : <ChevronDown size={12} className="text-slate-900" />;
 };
 
 const TableView = ({ invoices, searchTerm, statusFilter, onRowClick }) => {
@@ -72,7 +62,7 @@ const TableView = ({ invoices, searchTerm, statusFilter, onRowClick }) => {
     };
 
     const ColHeader = ({ label, field, right = false }) => (
-        <th className={`table-th cursor-pointer select-none border-t-0 p-3 bg-slate-50 ${right ? 'text-right' : 'text-left'}`} onClick={() => handleSort(field)}>
+        <th className={`px-4 py-3 cursor-pointer select-none border-b border-slate-100 bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-500 ${right ? 'text-right' : 'text-left'}`} onClick={() => handleSort(field)}>
             <span className={`flex items-center gap-1 ${right ? 'justify-end' : ''}`}>
                 {label}
                 <SortIcon field={field} sortField={sortField} sortDir={sortDir} />
@@ -83,18 +73,18 @@ const TableView = ({ invoices, searchTerm, statusFilter, onRowClick }) => {
     return (
         <div>
             <div className="flex items-center gap-3 mb-4 px-1">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-500 hover:text-text-primary transition-colors">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">
                     <input type="checkbox" className="rounded border-slate-300 text-brand-base focus:ring-brand-base" checked={overdueOnly} onChange={e => { setOverdueOnly(e.target.checked); setPage(1); }} />
                     <AlertTriangle size={13} className="text-red-400" /> Overdue only
                 </label>
                 <span className="text-xs text-slate-400 font-medium">{processed.length} invoice{processed.length !== 1 ? 's' : ''}</span>
             </div>
 
-            <div className="bg-white border border-border-base rounded-md overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
+            <Card padding="p-0 overflow-hidden">
+                <div className="overflow-x-auto bg-white">
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-border-base">
+                            <tr>
                                 <ColHeader label="Invoice #" field="invoiceNumber" />
                                 <ColHeader label="Client" field="client" />
                                 <ColHeader label="Status" field="status" />
@@ -113,31 +103,29 @@ const TableView = ({ invoices, searchTerm, statusFilter, onRowClick }) => {
                                     if (inv.isDraft) effStatus = 'draft';
                                     if (effStatus !== 'paid' && overdue) effStatus = 'overdue';
 
-                                    const statusCls = STATUS_STYLES[effStatus] || 'bg-slate-100 text-slate-500';
-                                    const statusLabel = STATUS_LABELS[effStatus] || effStatus;
                                     return (
                                         <motion.tr
                                             key={inv._id}
                                             layout
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
-                                            className="table-row cursor-pointer hover:bg-slate-50 border-b last:border-0 border-border-base transition-colors"
+                                            className="cursor-pointer hover:bg-slate-50 border-b last:border-0 border-slate-50 transition-colors"
                                             onClick={() => onRowClick(inv)}
                                         >
-                                            <td className="p-3 font-semibold text-text-primary uppercase tracking-wider text-xs">#{inv.invoiceNumber}</td>
-                                            <td className="p-3 font-medium text-text-primary">{inv.client?.name || '—'}</td>
-                                            <td className="p-3">
-                                                <span className={`inline-block text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded ${statusCls}`}>{statusLabel}</span>
+                                            <td className="px-4 py-3 font-semibold text-slate-900 tracking-tight text-xs">{inv.invoiceNumber}</td>
+                                            <td className="px-4 py-3 text-slate-600 truncate max-w-[200px]">{inv.client?.name || '—'}</td>
+                                            <td className="px-4 py-3">
+                                                <Badge status={effStatus} />
                                             </td>
-                                            <td className="p-3 font-semibold text-text-primary text-right">{currSym(inv.currency)}{Number(inv.totalAmount).toFixed(2)}</td>
-                                            <td className={`p-3 ${overdue ? 'text-red-500 font-semibold' : 'text-text-secondary'}`}>
+                                            <td className="px-4 py-3 font-bold text-slate-900 text-right">{currSym(inv.currency)} {Number(inv.totalAmount).toFixed(2)}</td>
+                                            <td className={`px-4 py-3 ${overdue ? 'text-red-500 font-semibold' : 'text-slate-500 font-medium'}`}>
                                                 <span className="flex items-center gap-1.5 text-xs">
                                                     {overdue && <AlertTriangle size={11} />}
                                                     <Calendar size={11} className={overdue ? 'text-red-300' : 'text-slate-300'} />
                                                     {fmtDate(inv.dueDate)}
                                                 </span>
                                             </td>
-                                            <td className="p-3 text-text-secondary text-xs">{fmtDate(inv.createdAt)}</td>
+                                            <td className="px-4 py-3 text-slate-400 text-xs font-medium">{fmtDate(inv.createdAt)}</td>
                                         </motion.tr>
                                     );
                                 })
@@ -155,7 +143,7 @@ const TableView = ({ invoices, searchTerm, statusFilter, onRowClick }) => {
                         </div>
                     </div>
                 )}
-            </div>
+            </Card>
         </div>
     );
 };

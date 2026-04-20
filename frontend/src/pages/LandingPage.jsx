@@ -2,7 +2,6 @@ import React from 'react';
 import { Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import LogoIcon from '../components/ui/LogoIcon';
-import { AnimatedHero } from '../components/ui/AnimatedHero';
 import { FeaturesSectionWithBentoGrid } from '../components/blocks/FeatureSectionWithBentoGrid';
 import { Pricing2 } from '../components/blocks/Pricing2';
 
@@ -26,9 +25,27 @@ const testimonials = [
 
 const LandingPage = () => {
     return (
-        <div className="pt-16 bg-slate-50 min-h-screen font-sans selection:bg-brand-base/20 selection:text-brand-base">
+        <div className="pt-20 bg-slate-50 min-h-screen font-sans selection:bg-brand-base/20 selection:text-brand-base">
             
-            <AnimatedHero />
+            <div className="max-w-4xl mx-auto px-6 pt-24 pb-32 text-center">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-base/10 text-brand-base text-[10px] font-bold uppercase tracking-widest rounded-full mb-8 border border-brand-base/20">
+                    <Zap size={12} fill="currentColor" /> PRODUCTION READY
+                </div>
+                <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight leading-[1.1] mb-6">
+                    Professional invoicing,<br />without the bulk.
+                </h1>
+                <p className="text-lg md:text-xl text-slate-500 mb-10 tracking-tight max-w-2xl mx-auto">
+                    Create beautifully structured invoices, track payments instantly, and send professional links securely in seconds.
+                </p>
+                <div className="flex items-center justify-center gap-4">
+                    <Link to="/signup" className="px-8 py-3 bg-brand-base hover:bg-brand-hover text-white font-bold rounded-sm shadow-sm transition-colors tracking-tight">
+                        Start for free
+                    </Link>
+                    <a href="#features" className="px-8 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-sm shadow-sm hover:bg-slate-50 transition-colors tracking-tight">
+                        See features
+                    </a>
+                </div>
+            </div>
 
             {/* Master Grid Container */}
             <main className="max-w-7xl mx-auto border-l border-r border-slate-200 bg-white flex flex-col min-h-screen relative shadow-sm">

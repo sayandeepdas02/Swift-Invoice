@@ -92,3 +92,84 @@ export const getDashboardMetrics = async (req, res) => {
         res.status(500).json({ success: false, data: null, message: error.message });
     }
 };
+
+import mongoose from 'mongoose';
+import { logger } from '../services/logger.js';
+
+export const getAdvancedMetrics = async (req, res) => {
+    try {
+        // Need string to ObjectId transformation natively to properly pass aggregation boundaries
+        const userId = new mongoose.Types.ObjectId(req.user._id);
+        const range = req.query.range || '30d';
+        let startDate = new Date();
+        
+        switch (range) {
+            case '1y': startDate.setFullYear(startDate.getFullYear() - 1); break;
+            case '90d': startDate.setDate(startDate.getDate() - 90); break;
+            case '30d': default: startDate.setDate(startDate.getDate() - 30); break;
+        }
+
+        const matchStage = { 
+            userId: userId, 
+            createdAt: { $gte: startDate } 
+        };
+
+        // Monthly Trends
+        const trends = await Invoice.aggregate([
+            { $match: matchStage },
+            { 
+                $group: { 
+                    _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
+                    revenue: { $sum: { $cond: [{ $in: ['$status', ['paid', 'Paid']] }, '$totalAmount', 0] } },
+                    count: { $sum: 1 }
+                } 
+            },
+            { $sort: { '_id.year': 1, '_id.month': 1 } }
+        ]);
+
+        // Payment Behavior Array mapping 
+        const behavior = await Invoice.aggregate([
+            { $match: { ...matchStage, status: { $in: ['paid', 'Paid'] }, paidAt: { $exists: true, $type: "date" }, dueDate: { $exists: true, $type: "date" } } },
+            { 
+                $project: { 
+                    delayMs: { $subtract: ["$paidAt", "$dueDate"] } 
+                } 
+            },
+            {
+                $group: {
+                    _id: null,
+                    avgDelayMs: { $avg: "$delayMs" },
+                    onTimeCount: { $sum: { $cond: [{ $lte: ["$delayMs", 0] }, 1, 0] } },
+                    total: { $sum: 1 }
+                }
+            }
+        ]);
+
+        // Client Intelligence
+        const clients = await Invoice.aggregate([
+            { $match: matchStage },
+            { 
+                $group: {
+                    _id: "$client.email",
+                    name: { $first: "$client.name" },
+                    revenue: { $sum: { $cond: [{ $in: ['$status', ['paid', 'Paid']] }, '$totalAmount', 0] } },
+                    overdueCount: { $sum: { $cond: [{ $eq: ['$status', 'overdue'] }, 1, 0] } }
+                }
+            },
+            { $sort: { revenue: -1 } },
+            { $limit: 10 }
+        ]);
+
+        res.json({
+            success: true,
+            data: {
+                trends: trends || [],
+                behavior: behavior[0] || { avgDelayMs: 0, onTimeCount: 0, total: 0 },
+                topClients: clients || []
+            }
+        });
+    } catch (error) {
+        logger.error('advanced_analytics_failed', { error: error.message, userId: req.user._id });
+        res.status(500).json({ success: false, message: 'Advanced aggregation failed natively' });
+    }
+};

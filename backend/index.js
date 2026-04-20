@@ -13,12 +13,18 @@ import settingsRoutes from './routes/settings.js';
 import dashboardRoutes from './routes/dashboard.js';
 import uploadRoutes from './routes/upload.js';
 import serviceRoutes from './routes/services.js';
+import paymentRoutes from './routes/payments.js';
+import webhookRoutes from './routes/webhooks.js';
+import { requestSequenceMiddleware } from './middleware/requestSequence.js';
+import rateLimit from 'express-rate-limit';
 import './cron/reminders.js';
 
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// Middleware
+// Global Middleware
+app.use(requestSequenceMiddleware);
+
 const allowedOrigins = [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     'http://localhost:5173',
@@ -33,18 +39,35 @@ app.use(cors({
     credentials: true
 }));
 
+const publicLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30, // Strict limit for scraping public links
+    message: { success: false, message: 'Too many requests to public invoice links. Try again later.' }
+});
+
+const legacyApiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 200, 
+    message: { success: false, message: 'Too many API requests.' }
+});
+
+// Strictly raw parsing for webhooks to preserve signature integrity
+app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhookRoutes);
+
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+app.use('/api', legacyApiLimiter); // Protect general endpoints
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/invoices', invoiceRoutes);
-app.use('/api/public', publicRoutes);
+app.use('/api/public', publicLimiter, publicRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI, {

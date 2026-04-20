@@ -2,7 +2,7 @@ import User from '../models/User.js';
 
 export const getSettings = async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).select('businessName businessEmail businessAddress logoUrl defaultCurrency invoicePrefix invoiceCounter');
+        const user = await User.findById(req.user._id).select('businessName businessEmail businessAddress logoUrl defaultCurrency invoicePrefix invoiceCounter taxType defaultTaxRate defaultTerms dateFormat');
         if (!user) {
             return res.status(404).json({ success: false, data: null, message: 'User not found' });
         }
@@ -14,7 +14,7 @@ export const getSettings = async (req, res) => {
 
 export const updateSettings = async (req, res) => {
     try {
-        const updatableFields = ['businessName', 'businessEmail', 'businessAddress', 'logoUrl', 'defaultCurrency', 'invoicePrefix'];
+        const updatableFields = ['businessName', 'businessEmail', 'businessAddress', 'logoUrl', 'defaultCurrency', 'invoicePrefix', 'taxType', 'defaultTaxRate', 'defaultTerms', 'dateFormat'];
         const updates = {};
         
         updatableFields.forEach(field => {

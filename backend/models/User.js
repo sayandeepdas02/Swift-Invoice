@@ -13,6 +13,10 @@ const userSchema = new mongoose.Schema({
     businessAddress: { type: String, default: '' },
     logoUrl: { type: String, default: '' },
     defaultCurrency: { type: String, default: 'USD' },
+    taxType: { type: String, default: 'none' }, // 'none', 'inclusive', 'exclusive'
+    defaultTaxRate: { type: Number, default: 0 },
+    defaultTerms: { type: String, default: '' },
+    dateFormat: { type: String, default: 'MMM DD, YYYY' },
     invoicePrefix: { type: String, default: 'INV' },
     invoiceCounter: { type: Number, default: 1 }
 }, {

@@ -58,8 +58,11 @@ export const downloadInvoice = async (req, res) => {
         
         const pdfBuffer = await generateInvoicePDF(invoice);
 
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber || 'file'}.pdf`);
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdfBuffer.length,
+            'Content-Disposition': `attachment; filename=invoice-${invoice.invoiceNumber || 'file'}.pdf`
+        });
         res.send(pdfBuffer);
     } catch (error) {
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
@@ -84,9 +87,9 @@ export const getInvoiceById = async (req, res) => {
     }
 };
 
-export const sendInvoice = async (req, res) => {
+    export const sendInvoice = async (req, res) => {
     try {
-        const { message } = req.body;
+        const { message, token } = req.body;
         // Verify invoice belongs to user
         const invoice = await invoiceService.getInvoiceById(req.params.id, req.user._id);
         
@@ -95,9 +98,13 @@ export const sendInvoice = async (req, res) => {
             return res.status(400).json({ success: false, data: null, message: 'Client email is missing' });
         }
 
+        if (!token) {
+            return res.status(400).json({ success: false, data: null, message: 'Public token is required to generate the email link' });
+        }
+
         // Generating front-end public URL
         const frontEndUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        const publicUrl = `${frontEndUrl}/invoice/${invoice.publicId}`;
+        const publicUrl = `${frontEndUrl}/invoice/${invoice.publicId}?token=${token}`;
 
         // Buffer the PDF
         const pdfBuffer = await generateInvoicePDF(invoice);
@@ -113,9 +120,9 @@ export const sendInvoice = async (req, res) => {
         });
 
         // Update database explicitly 
-        // Note: invoiceService.updateInvoiceStatus doesn't let us pass status easily outside the predefined flow or we could just use it.
-        // Actually, updateInvoiceStatus takes (id, status, userId) which is perfect.
         const updatedInvoice = await invoiceService.updateInvoiceStatus(invoice._id, 'sent', req.user._id);
+
+        logActivity(req.user._id, invoice._id, 'SENT', { targetEmail: invoice.client.email });
 
         res.json({ success: true, data: updatedInvoice, message: 'Invoice sent successfully' });
     } catch (error) {
@@ -158,27 +165,95 @@ export const getLastInvoice = async (req, res) => {
     }
 };
 
+import { logActivity } from '../services/activityService.js';
+
 export const getPublicInvoiceById = async (req, res) => {
     try {
+        const { token } = req.query;
+
         // Query by publicId, bypassing protect
         const invoiceRaw = await Invoice.findOne({ publicId: req.params.publicId });
         if (!invoiceRaw) {
             return res.status(404).json({ success: false, data: null, message: 'Invoice not found' });
         }
 
+        // Token Security Validation
+        if (!token) {
+            return res.status(403).json({ success: false, message: 'Access forbidden: Missing token' });
+        }
+        
+        if (invoiceRaw.publicTokenExpiresAt && new Date() > invoiceRaw.publicTokenExpiresAt) {
+            return res.status(403).json({ success: false, message: 'Access forbidden: Link expired' });
+        }
+
+        const isValid = await bcrypt.compare(token, invoiceRaw.publicTokenHash);
+        if (!isValid) {
+            return res.status(403).json({ success: false, message: 'Access forbidden: Invalid token' });
+        }
+
         // Optional viewedAt stamping
-        if (!invoiceRaw.viewedAt && invoiceRaw.status !== 'paid') {
-            invoiceRaw.viewedAt = new Date();
-            invoiceRaw.status = 'viewed';
-            await invoiceRaw.save();
+        if (!invoiceRaw.viewedAt && invoiceRaw.status !== 'paid' && invoiceRaw.status !== 'cancelled' && invoiceRaw.status !== 'disputed') {
+            if (invoiceRaw.status === 'sent') {
+                invoiceRaw.viewedAt = new Date();
+                invoiceRaw.status = 'viewed';
+                await invoiceRaw.save();
+            }
         }
 
         // Apply dynamic fields via service utility
         const invoice = invoiceService.withOverdue(invoiceRaw);
 
+        // Natively track the view event without blocking the API
+        logActivity(invoiceRaw.userId, invoice._id, 'VIEWED', { 
+            ip: req.ip, 
+            userAgent: req.get('User-Agent') 
+        });
+
         res.json({ success: true, data: invoice, message: 'Public invoice fetched successfully' });
     } catch (error) {
         console.error('Public Invoice Error:', error);
         res.status(500).json({ success: false, data: null, message: error.message });
+    }
+};
+
+export const testPDFEngine = async (req, res) => {
+    try {
+        console.log('[TEST PDF] Starting test engine request...');
+        const html = `
+            <html>
+                <head><title>Test PDF</title></head>
+                <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+                    <h1>Hello World!</h1>
+                    <p>If you are reading this, Puppeteer PDF generation successfully works independently of business logic.</p>
+                </body>
+            </html>
+        `;
+        
+        const puppeteer = (await import('puppeteer')).default;
+        console.log('[TEST PDF] Launching browser...');
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox'],
+            headless: 'new'
+        });
+        
+        console.log('[TEST PDF] Setting page content...');
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        
+        console.log('[TEST PDF] Generating buffer...');
+        const pdfBuffer = await page.pdf({ format: 'A4' });
+        
+        await browser.close();
+        console.log(`[TEST PDF] Done. Buffer size: ${pdfBuffer.length}`);
+        
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Length': pdfBuffer.length,
+            'Content-Disposition': 'inline; filename="hello-world.pdf"'
+        });
+        res.send(pdfBuffer);
+    } catch (error) {
+        console.error('[TEST PDF ERROR]', error.stack);
+        res.status(500).json({ success: false, message: 'PDF Engine failed', error: error.message });
     }
 };

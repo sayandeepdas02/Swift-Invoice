@@ -88,7 +88,7 @@ const InvoicesList = () => {
     }
 
     return (
-        <div className="p-8 max-w-[1600px] mx-auto space-y-6">
+        <div className="page-container space-y-6 pb-12 pt-6">
             
             {/* Page Header */}
             <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">

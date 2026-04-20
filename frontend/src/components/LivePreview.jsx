@@ -17,8 +17,8 @@ const LivePreview = ({ invoice, subtotal, taxAmount, totalAmount, currencySymbol
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            {/* ── Toolbar ───────────────────────────────────────── */}
-            <div className="preview-toolbar">
+            {/* ── Minimal Toolbar ───────────────────────────────────────── */}
+            <div className="preview-toolbar !justify-end bg-transparent border-none pb-2">
                 {/* Zoom selector */}
                 <div className="preview-zoom-select-wrapper">
                     <ZoomIn size={14} className="text-zinc-400" />
@@ -33,29 +33,6 @@ const LivePreview = ({ invoice, subtotal, taxAmount, totalAmount, currencySymbol
                         ))}
                     </select>
                     <ChevronDown size={12} className="text-zinc-400 pointer-events-none absolute right-2" />
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {/* Copy Link — future-ready placeholder */}
-                    <button
-                        disabled
-                        title="Coming soon — share invoice link"
-                        className="preview-icon-btn opacity-40 cursor-not-allowed"
-                        aria-label="Copy link (coming soon)"
-                    >
-                        <Link2 size={15} />
-                    </button>
-
-                    {/* Download PDF */}
-                    <button
-                        onClick={onDownload}
-                        disabled={isDownloading}
-                        className="preview-download-btn"
-                        aria-label="Download PDF"
-                    >
-                        <Download size={14} />
-                        {isDownloading ? 'Generating…' : 'Download PDF'}
-                    </button>
                 </div>
             </div>
 

@@ -14,7 +14,6 @@ const Sidebar = () => {
     const topLinks = [
         { path: '/dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard' },
         { path: '/invoices', icon: <FileText size={18} />, label: 'Invoices', activeCondition: isExactInvoice },
-        { path: '/invoices/new', icon: <PlusSquare size={18} />, label: 'Create Invoice' },
         { path: '/clients', icon: <Users size={18} />, label: 'Clients' },
         { path: '/settings', icon: <Settings size={18} />, label: 'Settings' },
     ];

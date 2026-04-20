@@ -1,4 +1,4 @@
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 import sanitizeHtml from 'sanitize-html';
 
 export const generateInvoicePDF = async (invoiceData) => {
@@ -133,19 +133,29 @@ export const generateInvoicePDF = async (invoiceData) => {
 
   let browser;
   try {
-    const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium';
+    console.log('[PDF] Starting Puppeteer launch sequence...');
     browser = await puppeteer.launch({
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      executablePath: executablePath,
       headless: 'new'
     });
+    console.log('[PDF] Browser launched successfully.');
 
     const page = await browser.newPage();
+    console.log('[PDF] New page created. Setting HTML content...');
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    console.log('[PDF] HTML content set. Generating PDF...');
+    
     const pdfBuffer = await page.pdf(options);
+    console.log(`[PDF] PDF Generated successfully! Buffer size: ${pdfBuffer.length} bytes`);
+    
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+        throw new Error("Generated PDF buffer is empty.");
+    }
+    
     return pdfBuffer;
   } catch (error) {
-    console.error('PDF Generation Error (Puppeteer):', error);
+    console.error('[PDF ERROR] Fatal error during PDF generation:');
+    console.error(error.stack);
     if (error.message.includes('browser was not found')) {
       console.error('\\n*** CHROMIUM EXECUTABLE NOT FOUND ***');
       console.error('Ensure PUPPETEER_EXECUTABLE_PATH is set correctly in your environment variables.');

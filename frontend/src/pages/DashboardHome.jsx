@@ -5,19 +5,21 @@ import { invoiceApi } from '../services/api/invoiceApi';
 import { dashboardApi } from '../services/api/dashboardApi';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Badge from '../components/ui/Badge';
 import dayjs from 'dayjs';
 
 const StatCard = ({ title, value, icon, trend }) => (
-    <div className="bg-white p-6 border border-slate-200">
+    <Card padding="p-6 h-full flex flex-col justify-between">
         <div className="flex justify-between items-start mb-4">
             <h3 className="text-slate-500 font-semibold text-sm tracking-tight">{title}</h3>
             <div className="text-slate-400">{icon}</div>
         </div>
         <div className="flex items-end gap-3">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">{value}</h2>
-            {trend && <span className="text-xs font-semibold text-emerald-500 mb-1">{trend}</span>}
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight leading-none">{value}</h2>
+            {trend && <span className="text-xs font-semibold text-emerald-500 mb-0.5">{trend}</span>}
         </div>
-    </div>
+    </Card>
 );
 
 const DashboardHome = () => {
@@ -97,16 +99,15 @@ const DashboardHome = () => {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard title="Total Revenue" value={formatCurrency(stats.totalRevenue)} icon={<TrendingUp size={20} />} trend={stats.trend} />
-                <StatCard title="Paid" value={formatCurrency(stats.paid)} icon={<CheckCircle2 size={20} />} />
-                <StatCard title="Pending" value={formatCurrency(stats.pending)} icon={<Clock size={20} />} />
+                <StatCard title="Pending Amount" value={formatCurrency(stats.pending)} icon={<Clock size={20} />} />
                 <StatCard title="Overdue Invoices" value={stats.overdueCount} icon={<AlertTriangle size={20} className={stats.overdueCount > 0 ? "text-red-500" : ""} />} />
             </div>
 
             {/* Recent Invoices Table */}
-            <div className="bg-white border border-slate-200">
-                <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center">
+            <Card padding="p-0 overflow-hidden border-slate-200">
+                <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white">
                     <h3 className="text-base font-bold text-slate-900 tracking-tight">Recent Invoices</h3>
                     <Link to="/invoices" className="text-sm font-semibold text-brand-base hover:text-brand-hover flex items-center gap-1">
                         View all <ArrowRight size={14} />
@@ -114,51 +115,45 @@ const DashboardHome = () => {
                 </div>
                 
                 {invoices.length === 0 ? (
-                    <div className="p-12 flex flex-col items-center justify-center text-center">
-                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                    <div className="p-12 flex flex-col items-center justify-center text-center bg-white">
+                        <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mb-4">
                             <FileText size={20} className="text-slate-400" />
                         </div>
                         <h3 className="text-sm font-bold text-slate-900 mb-1">No invoices yet</h3>
-                        <p className="text-xs text-slate-500 mb-4">Create your first invoice to track your revenue.</p>
+                        <p className="text-xs text-slate-500 mb-5">Create your first invoice to track your revenue.</p>
                         <Link to="/invoices/new">
-                            <Button variant="secondary" size="sm" className="shadow-none">Create Invoice</Button>
+                            <Button variant="primary" size="sm" className="shadow-sm">Create Invoice</Button>
                         </Link>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto bg-white">
                         <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                                    <th className="px-6 py-3 font-semibold">Invoice ID</th>
-                                    <th className="px-6 py-3 font-semibold">Client</th>
-                                    <th className="px-6 py-3 font-semibold">Amount</th>
-                                    <th className="px-6 py-3 font-semibold">Status</th>
-                                    <th className="px-6 py-3 font-semibold">Date</th>
+                                <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                    <th className="px-6 py-3">Invoice ID</th>
+                                    <th className="px-6 py-3">Client</th>
+                                    <th className="px-6 py-3">Amount</th>
+                                    <th className="px-6 py-3">Status</th>
+                                    <th className="px-6 py-3 hidden sm:table-cell">Date</th>
                                 </tr>
                             </thead>
                             <tbody className="text-sm">
                                 {invoices.map((inv) => (
-                                    <tr key={inv._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/invoices/edit/${inv._id}`)}>
-                                        <td className="px-6 py-4 font-semibold text-slate-900">{inv.invoiceNumber}</td>
+                                    <tr key={inv._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors group cursor-pointer" onClick={() => navigate(`/invoices/edit/${inv._id}`)}>
+                                        <td className="px-6 py-4 font-semibold text-slate-900 tracking-tight">{inv.invoiceNumber}</td>
                                         <td className="px-6 py-4 text-slate-600">{inv.client.name || 'Unnamed Client'}</td>
-                                        <td className="px-6 py-4 font-medium text-slate-900">{inv.currency} {inv.totalAmount?.toFixed(2)}</td>
+                                        <td className="px-6 py-4 font-bold text-slate-900">{inv.currency} {inv.totalAmount?.toFixed(2)}</td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-[11px] font-bold uppercase tracking-wider border ${
-                                                inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                                inv.isDraft ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                'bg-yellow-50 text-yellow-700 border-yellow-200'
-                                            }`}>
-                                                {inv.isDraft ? 'Draft' : inv.status}
-                                            </span>
+                                            <Badge status={inv.isDraft ? 'draft' : inv.status} />
                                         </td>
-                                        <td className="px-6 py-4 text-slate-500 hidden sm:table-cell">{dayjs(inv.issueDate).format('MMM D, YYYY')}</td>
+                                        <td className="px-6 py-4 text-slate-500 hidden sm:table-cell font-medium">{dayjs(inv.issueDate).format('MMM D, YYYY')}</td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
                     </div>
                 )}
-            </div>
+            </Card>
         </div>
     );
 };
