@@ -10,40 +10,40 @@ export const generateInvoicePDF = async (invoiceData) => {
   const sanitize = (text) => sanitizeHtml(text || '', { allowedTags: [], allowedAttributes: {} });
 
   const resolveImage = async (url) => {
-    if (!url) return '';
+    if (!url || typeof url !== 'string' || url === 'undefined' || url === 'null') return '';
     if (url.startsWith('data:image')) {
-        console.log('[PDF] Image is already Base64');
-        return url;
+        const matches = url.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (matches && matches.length === 3) {
+            return `data:${matches[1]};base64,${matches[2]}`;
+        }
+        return '';
     }
-    console.log('[PDF] Image is URL, fetching and securely validating:', url);
+    
     try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         const response = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
         
-        if (!response.ok) {
-            console.log('[PDF] Fetch failed, securely dropping image:', response.status);
-            return '';
-        }
+        if (!response.ok) return '';
+        
         const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.startsWith('image/')) {
-            console.log('[PDF] URL is not an image MIME type, completely dropping.');
-            return '';
-        }
+        if (!contentType || !contentType.startsWith('image/')) return '';
+        
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         return `data:${contentType};base64,${buffer.toString('base64')}`;
     } catch (e) {
-        console.log('[PDF] Image fetch error, completely dropping:', e.message);
         return '';
     }
   };
 
-  const resolvedLogo = await resolveImage(invoiceData.sender.logo);
+  const resolvedLogo = await resolveImage(invoiceData.sender?.logo);
   const resolvedQr = await resolveImage(invoiceData.qrCodeImage);
 
-  // HTML Template for the Invoice
+  console.log(`[DEBUG] Logo size: ${invoiceData.sender?.logo?.length || 'no logo'}`);
+  console.log(`[DEBUG] QR size: ${invoiceData.qrCodeImage?.length || 'no qr'}`);
+
   const htmlContent = `
     <!DOCTYPE html>
     <html>
@@ -73,7 +73,7 @@ export const generateInvoicePDF = async (invoiceData) => {
       <div class="header">
         <div class="logo-container">
           ${resolvedLogo ? `<img src="${resolvedLogo}" class="logo" alt="Company Logo">` : ''}
-          ${invoiceData.sender.companyName ? `<h2 style="margin:0; font-weight:900; margin-top: 10px;">${sanitize(invoiceData.sender.companyName)}</h2>` : `<h2 style="margin:0; font-weight:900;">SWIFT INVOICE</h2>`}
+          ${invoiceData.sender?.companyName ? `<h2 style="margin:0; font-weight:900; margin-top: 10px;">${sanitize(invoiceData.sender.companyName)}</h2>` : `<h2 style="margin:0; font-weight:900;">SWIFT INVOICE</h2>`}
         </div>
         <div class="invoice-details">
           <h1>INVOICE</h1>
@@ -86,15 +86,15 @@ export const generateInvoicePDF = async (invoiceData) => {
       <div class="details-grid">
         <div>
           <div class="section-title">Billed To</div>
-          <div class="detail-item"><strong>${sanitize(invoiceData.client.name)}</strong></div>
-          <div class="detail-item">${sanitize(invoiceData.client.email)}</div>
-          <div class="detail-item">${sanitize(invoiceData.client.address)}</div>
+          <div class="detail-item"><strong>${sanitize(invoiceData.client?.name)}</strong></div>
+          <div class="detail-item">${sanitize(invoiceData.client?.email)}</div>
+          <div class="detail-item">${sanitize(invoiceData.client?.address)}</div>
         </div>
         <div style="text-align: right;">
           <div class="section-title">Pay To</div>
-          <div class="detail-item"><strong>${sanitize(invoiceData.sender.name)}</strong></div>
-          <div class="detail-item">${sanitize(invoiceData.sender.email)}</div>
-          <div class="detail-item">${sanitize(invoiceData.sender.address)}</div>
+          <div class="detail-item"><strong>${sanitize(invoiceData.sender?.name)}</strong></div>
+          <div class="detail-item">${sanitize(invoiceData.sender?.email)}</div>
+          <div class="detail-item">${sanitize(invoiceData.sender?.address)}</div>
         </div>
       </div>
 
@@ -108,7 +108,7 @@ export const generateInvoicePDF = async (invoiceData) => {
           </tr>
         </thead>
         <tbody>
-          ${invoiceData.items.map(item => `
+          ${(invoiceData.items || []).map(item => `
             <tr>
               <td>${sanitize(item.description)}</td>
               <td style="text-align: center;">${sanitize(String(item.quantity))}</td>
@@ -159,46 +159,55 @@ export const generateInvoicePDF = async (invoiceData) => {
     </html>
   `;
 
+  console.log(`[DEBUG] HTML size (KB): ${(Buffer.byteLength(htmlContent, 'utf8') / 1024).toFixed(2)} KB`);
+
   const options = {
     format: 'A4',
     printBackground: true,
+    preferCSSPageSize: true,
     margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
   };
 
   let browser;
+  let page;
   try {
-    console.log('[PDF] Starting Puppeteer launch sequence...');
     browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      headless: 'new'
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      headless: true
     });
-    console.log('[PDF] Browser launched successfully.');
 
-    const page = await browser.newPage();
-    console.log('[PDF] New page created. Setting HTML content...');
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-    console.log('[PDF] HTML content set. Generating PDF...');
+    page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0', timeout: 30000 });
     
-    const pdfBuffer = await page.pdf(options);
-    console.log(`[PDF] PDF Generated successfully! Buffer size: ${pdfBuffer.length} bytes`);
+    // Ensure images are fully loaded
+    await page.evaluate(async () => {
+        const images = Array.from(document.querySelectorAll('img'));
+        await Promise.all(images.map(img => {
+            if (img.complete) return;
+            return new Promise((resolve) => {
+                img.addEventListener('load', resolve);
+                img.addEventListener('error', resolve);
+            });
+        }));
+    });
+
+    const pdfBufferRaw = await page.pdf(options);
+    const pdfBuffer = Buffer.from(pdfBufferRaw);
     
+    console.log(`[DEBUG] Final PDF size: ${(pdfBuffer.length / 1024).toFixed(2)} KB`);
+
     if (!pdfBuffer || pdfBuffer.length === 0) {
         throw new Error("Generated PDF buffer is empty.");
     }
     
     return pdfBuffer;
   } catch (error) {
-    console.error('[PDF ERROR] Fatal error during PDF generation:');
-    console.error(error.stack);
     if (error.message.includes('browser was not found')) {
       console.error('\\n*** CHROMIUM EXECUTABLE NOT FOUND ***');
-      console.error('Ensure PUPPETEER_EXECUTABLE_PATH is set correctly in your environment variables.');
-      console.error('For Railway: Set PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium and ensure a Chromium buildpack or apt-get install is used.\\n');
     }
     throw error;
   } finally {
-    if (browser) {
-      await browser.close().catch(console.error);
-    }
+    if (page && !page.isClosed()) await page.close().catch(() => {});
+    if (browser) await browser.close().catch(() => {});
   }
 };

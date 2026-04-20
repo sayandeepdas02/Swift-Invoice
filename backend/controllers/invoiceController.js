@@ -5,9 +5,38 @@ import { sendReminder } from '../services/reminderService.js';
 import Invoice from '../models/Invoice.js';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import sharp from 'sharp';
+
+const processImages = async (body) => {
+    const processBase64 = async (base64) => {
+        if (!base64 || typeof base64 !== 'string' || !base64.startsWith('data:image')) return base64;
+        
+        const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        if (!matches || matches.length !== 3) return base64;
+        
+        const dataBuffer = Buffer.from(matches[2], 'base64');
+        const originalSizeKB = dataBuffer.length / 1024;
+
+        if (originalSizeKB > 500) {
+            throw new Error(`Image size exceeds safe threshold of 500KB (Actual: ${originalSizeKB.toFixed(2)}KB). Please upload a smaller image.`);
+        }
+
+        const compressed = await sharp(dataBuffer)
+            .resize({ width: 300, withoutEnlargement: true })
+            .jpeg({ quality: 80, force: false })
+            .png({ compressionLevel: 8, force: false })
+            .toBuffer();
+
+        return `data:${matches[1]};base64,${compressed.toString('base64')}`;
+    };
+
+    if (body?.sender?.logo) body.sender.logo = await processBase64(body.sender.logo);
+    if (body?.qrCodeImage) body.qrCodeImage = await processBase64(body.qrCodeImage);
+};
 
 export const createInvoice = async (req, res) => {
     try {
+        await processImages(req.body);
         const invoice = await invoiceService.createInvoice(req.body, req.user.workspaceId);
         res.status(201).json({ success: true, data: invoice, message: 'Invoice created successfully' });
     } catch (error) {
@@ -17,6 +46,7 @@ export const createInvoice = async (req, res) => {
 
 export const updateInvoice = async (req, res) => {
     try {
+        await processImages(req.body);
         const invoice = await invoiceService.updateInvoice(req.params.id, req.body, req.user.workspaceId);
         res.json({ success: true, data: invoice, message: 'Invoice updated successfully' });
     } catch (error) {
@@ -53,20 +83,26 @@ export const duplicateInvoice = async (req, res) => {
 
 export const downloadInvoice = async (req, res) => {
     try {
-        // Must use the model directly here or rely on the service fetching standard object
-        // getInvoiceById returns a leaned object or virtuals, but PDF gen needs raw props sometimes
-        // Actually, the service returns the Mongoose document with dynamic isOverdue depending if it used `.toObject()`.
         const invoice = await invoiceService.getInvoiceById(req.params.id, req.user.workspaceId);
         
-        const pdfBuffer = await generateInvoicePDF(invoice);
+        const rawPdf = await generateInvoicePDF(invoice);
+        const pdfBuffer = Buffer.from(rawPdf);
+
+        const sizeKb = pdfBuffer.length / 1024;
+        console.log(`[PDF] Generated PDF for Invoice ID ${invoice._id} - Size: ${sizeKb.toFixed(2)} KB`);
+
+        if (pdfBuffer.length < 1024) {
+             throw new Error(`Generated PDF is suspiciously small or corrupted (${pdfBuffer.length} bytes), aborting download.`);
+        }
 
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdfBuffer.length,
             'Content-Disposition': `attachment; filename=invoice-${invoice.invoiceNumber || 'file'}.pdf`
         });
-        res.send(pdfBuffer);
+        res.end(pdfBuffer);
     } catch (error) {
+        console.error('Download Invoice Error:', error);
         res.status(error.cause || 500).json({ success: false, data: null, message: error.message });
     }
 };
@@ -92,19 +128,16 @@ export const getInvoiceById = async (req, res) => {
 export const sendInvoice = async (req, res) => {
     try {
         const { message } = req.body;
-        // Verify invoice belongs to user natively grabbing document to mutate
         const invoiceRaw = await Invoice.findById(req.params.id);
         if (!invoiceRaw) throw new Error('Invoice not found', { cause: 404 });
         if (invoiceRaw.userId && invoiceRaw.userId.toString() !== req.user.workspaceId.toString()) {
             throw new Error('Not authorized', { cause: 401 });
         }
         
-        // Client needs email
         if (!invoiceRaw.client || !invoiceRaw.client.email) {
             return res.status(400).json({ success: false, data: null, message: 'Client email is missing' });
         }
 
-        // Generate a new secure token dynamically to ensure emails can be sent at any time independently
         const publicTokenRaw = crypto.randomBytes(32).toString('hex');
         const publicTokenHash = await bcrypt.hash(publicTokenRaw, 10);
         
@@ -114,26 +147,21 @@ export const sendInvoice = async (req, res) => {
 
         const invoice = invoiceService.withOverdue(invoiceRaw);
 
-        // Generating front-end public URL
         const frontEndUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         const publicUrl = `${frontEndUrl}/invoice/${invoice.publicId}?token=${publicTokenRaw}`;
 
-        // Buffer the PDF
         const pdfBuffer = await generateInvoicePDF(invoice);
 
-        // Send Email
         await sendInvoiceEmail({
             to: invoice.client.email,
             subject: `Invoice #${invoice.invoiceNumber} from ${invoice.sender.companyName || invoice.sender.name}`,
             message,
             publicLink: publicUrl,
-            pdfBuffer,
+            pdfBuffer: Buffer.from(pdfBuffer),
             invoiceNumber: invoice.invoiceNumber
         });
 
-        // Update database explicitly 
         const updatedInvoice = await invoiceService.updateInvoiceStatus(invoice._id, 'sent', req.user.workspaceId);
-
         logActivity(req.user.workspaceId, invoice._id, 'SENT', { targetEmail: invoice.client.email });
 
         res.json({ success: true, data: updatedInvoice, message: 'Invoice sent successfully' });
@@ -183,13 +211,11 @@ export const getPublicInvoiceById = async (req, res) => {
     try {
         const { token } = req.query;
 
-        // Query by publicId, bypassing protect
         const invoiceRaw = await Invoice.findOne({ publicId: req.params.publicId });
         if (!invoiceRaw) {
             return res.status(404).json({ success: false, data: null, message: 'Invoice not found' });
         }
 
-        // Token Security Validation
         if (!token) {
             return res.status(403).json({ success: false, message: 'Access forbidden: Missing token' });
         }
@@ -203,7 +229,6 @@ export const getPublicInvoiceById = async (req, res) => {
             return res.status(403).json({ success: false, message: 'Access forbidden: Invalid token' });
         }
 
-        // Optional viewedAt stamping
         if (!invoiceRaw.viewedAt && invoiceRaw.status !== 'paid' && invoiceRaw.status !== 'cancelled' && invoiceRaw.status !== 'disputed') {
             if (invoiceRaw.status === 'sent') {
                 invoiceRaw.viewedAt = new Date();
@@ -212,10 +237,8 @@ export const getPublicInvoiceById = async (req, res) => {
             }
         }
 
-        // Apply dynamic fields via service utility
         const invoice = invoiceService.withOverdue(invoiceRaw);
 
-        // Natively track the view event without blocking the API
         logActivity(invoiceRaw.userId, invoice._id, 'VIEWED', { 
             ip: req.ip, 
             userAgent: req.get('User-Agent') 
@@ -230,40 +253,34 @@ export const getPublicInvoiceById = async (req, res) => {
 
 export const testPDFEngine = async (req, res) => {
     try {
-        console.log('[TEST PDF] Starting test engine request...');
         const html = `
             <html>
                 <head><title>Test PDF</title></head>
                 <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
                     <h1>Hello World!</h1>
-                    <p>If you are reading this, Puppeteer PDF generation successfully works independently of business logic.</p>
+                    <p>If you are reading this, Puppeteer PDF generation successfully works.</p>
                 </body>
             </html>
         `;
         
         const puppeteer = (await import('puppeteer')).default;
-        console.log('[TEST PDF] Launching browser...');
         const browser = await puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox'],
             headless: 'new'
         });
         
-        console.log('[TEST PDF] Setting page content...');
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
         
-        console.log('[TEST PDF] Generating buffer...');
-        const pdfBuffer = await page.pdf({ format: 'A4' });
-        
+        const pdfBuffer = Buffer.from(await page.pdf({ format: 'A4' }));
         await browser.close();
-        console.log(`[TEST PDF] Done. Buffer size: ${pdfBuffer.length}`);
         
         res.set({
             'Content-Type': 'application/pdf',
             'Content-Length': pdfBuffer.length,
             'Content-Disposition': 'inline; filename="hello-world.pdf"'
         });
-        res.send(pdfBuffer);
+        res.end(pdfBuffer);
     } catch (error) {
         console.error('[TEST PDF ERROR]', error.stack);
         res.status(500).json({ success: false, message: 'PDF Engine failed', error: error.message });
