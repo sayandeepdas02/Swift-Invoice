@@ -23,8 +23,15 @@ import Settings from './pages/Settings';
 
 // Layout Wrappers
 const PublicLayout = ({ children }) => (
-  <div className="min-h-screen bg-white">
+  <div className="min-h-screen">
     <Navbar />
+    {children}
+  </div>
+);
+
+// Auth pages manage their own header — no global Navbar
+const AuthPageLayout = ({ children }) => (
+  <div className="min-h-screen bg-background">
     {children}
   </div>
 );
@@ -45,9 +52,9 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<PublicLayout><LandingPage /></PublicLayout>} />
-          <Route path="/signin" element={<PublicLayout><SignIn /></PublicLayout>} />
-          <Route path="/signup" element={<PublicLayout><SignUp /></PublicLayout>} />
-          <Route path="/auth/register" element={<PublicLayout><SignUp /></PublicLayout>} />
+          <Route path="/signin" element={<AuthPageLayout><SignIn /></AuthPageLayout>} />
+          <Route path="/signup" element={<AuthPageLayout><SignUp /></AuthPageLayout>} />
+          <Route path="/auth/register" element={<AuthPageLayout><SignUp /></AuthPageLayout>} />
           <Route path="/invoice/:publicId" element={<PublicInvoice />} />
 
           {/* Authenticated SaaS Routes */}

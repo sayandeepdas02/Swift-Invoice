@@ -4,7 +4,7 @@ import TopBar from './TopBar';
 
 const DashboardLayout = ({ children }) => {
     return (
-        <div className="min-h-screen bg-slate-50 flex">
+        <div className="min-h-screen bg-background flex selection:bg-brand/10">
             <Sidebar />
             <div className="flex-1 flex flex-col ml-[240px]">
                 <TopBar />

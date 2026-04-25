@@ -1,282 +1,468 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&display=swap');
 @import "tailwindcss";
 
-@theme {
-  /* Brand Colors (Pink accent) */
-  --color-brand-base: #E11D48;
-  --color-brand-hover: #BE123C;
-  --color-brand-light: #F43F5E;
-  
-  /* Neutrals */
-  --color-bg-base: #F8FAFC;
-  --color-card-bg: #FFFFFF;
-  --color-border-base: #E2E8F0;
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  
-  /* Accents */
-  --color-success: #10B981;
-  --color-danger: #EF4444;
+@theme inline {
+  /* ── Exact chanhdai OKLCH tokens ── */
+  --color-background:        oklch(1 0 0);
+  --color-foreground:        oklch(0.141 0.005 285.823);
+  --color-primary:           oklch(0.141 0.005 285.823);
+  --color-primary-foreground:oklch(0.985 0 0);
+  --color-secondary:         oklch(0.967 0.001 286.375);
+  --color-secondary-foreground: oklch(0.141 0.005 285.823);
+  --color-muted:             oklch(0.967 0.001 286.375);
+  --color-muted-foreground:  oklch(0.552 0.016 285.938);
+  --color-card:              oklch(1 0 0);
+  --color-card-foreground:   oklch(0.141 0.005 285.823);
+  --color-accent:            oklch(0.967 0.001 286.375);
+  --color-accent-foreground: oklch(0.21 0.006 285.885);
+  --color-border:            oklch(0.92 0.004 286.32);
+  --color-line:              color-mix(in oklab, oklch(0.92 0.004 286.32) 64%, oklch(1 0 0));
+  --color-input:             oklch(0.92 0.004 286.32);
+  --color-ring:              oklch(0.705 0.015 286.067);
+  --color-destructive:       oklch(0.577 0.245 27.325);
 
-  /* Typography */
-  --font-sans: "Inter", "system-ui", "sans-serif";
+  /* ── Brand (rose-600) ── */
+  --color-brand:             #E11D48;
+  --color-brand-hover:       #BE123C;
+  --color-brand-light:       #F43F5E;
+  --color-brand-muted:       #FFF1F4;
 
-  /* Border Radius - Sharp, strict */
-  --radius-card: 6px;
-  --radius-btn: 0px;
-  --radius-input: 6px;
-  --radius-large: 8px;
+  /* ── Legacy aliases (keep dashboard working) ── */
+  --color-brand-base:        #E11D48;
+  --color-bg-base:           oklch(0.985 0 0);
+  --color-bg-subtle:         oklch(0.967 0.001 286.375);
+  --color-bg-white:          oklch(1 0 0);
+  --color-text-primary:      oklch(0.141 0.005 285.823);
+  --color-text-secondary:    oklch(0.552 0.016 285.938);
+  --color-text-muted:        oklch(0.705 0.015 286.067);
+  --color-border-base:       oklch(0.92 0.004 286.32);
+  --color-border-strong:     oklch(0.87 0.006 286.286);
+  --color-card-bg:           oklch(1 0 0);
+  --color-success:           oklch(0.723 0.219 149.579);
+  --color-danger:            oklch(0.577 0.245 27.325);
 
-  /* Shadows - Minimal/Flat Constraint */
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.05);
-  --shadow-hover: 0 4px 6px -1px rgba(0,0,0,0.08);
+  /* ── Typography — Supermemory DNA ── */
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", monospace;
+
+  /* ── Radius — chanhdai uses rounded-lg as base ── */
+  --radius-sm:  calc(var(--radius) - 4px);
+  --radius-md:  calc(var(--radius) - 2px);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) + 4px);
+  --radius:     0.5rem;
+
+  /* ── Shadows — chanhdai uses shadow-xs only ── */
+  --shadow-xs:  0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:  0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+
+  /* Legacy shadow aliases */
+  --shadow-card:  var(--shadow-xs);
+  --shadow-hover: var(--shadow-sm);
+
+  /* ── Expo-out easing (chanhdai pattern) ── */
+  --ease-expo-out: linear(
+    0 0%, 0.1684 2.66%, 0.3165 5.49%, 0.446 8.52%,
+    0.5581 11.78%, 0.6535 15.29%, 0.7341 19.11%,
+    0.8011 23.3%, 0.8557 27.93%, 0.8962 32.68%,
+    0.9283 38.01%, 0.9529 44.08%, 0.9711 51.14%,
+    0.9833 59.06%, 0.9915 68.74%, 1 100%
+  );
 }
 
+/* ─────────────────────────────────────────────
+   Base layer — exact chanhdai patterns
+───────────────────────────────────────────── */
 @layer base {
-  body {
-    @apply antialiased text-text-secondary bg-bg-base;
-    font-family: var(--font-sans);
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: var(--color-border);
+    outline-color: color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-semibold tracking-tight text-text-primary;
-    line-height: 1.15;
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-brand) 15%, transparent);
+    color: var(--color-foreground);
   }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+  }
+
+  /* chanhdai thin scrollbar */
+  ::-webkit-scrollbar        { width: 5px; }
+  ::-webkit-scrollbar-track  { background: transparent; }
+  ::-webkit-scrollbar-thumb  { background: var(--color-border); border-radius: 5px; }
+  *  { scrollbar-width: thin; scrollbar-color: var(--color-border) transparent; }
+
+  [id] { scroll-margin-top: 4.5rem; }
 }
 
+/* ─────────────────────────────────────────────
+   Utilities — exact chanhdai utilities
+───────────────────────────────────────────── */
+@layer utilities {
+
+  /* chanhdai signature: full-width hairline via pseudo-elements */
+  .screen-line-top {
+    position: relative;
+  }
+  .screen-line-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100vw;
+    z-index: -1;
+    height: 1px;
+    width: 200vw;
+    background-color: var(--color-line);
+  }
+
+  .screen-line-bottom {
+    position: relative;
+  }
+  .screen-line-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -100vw;
+    z-index: -1;
+    height: 1px;
+    width: 200vw;
+    background-color: var(--color-line);
+  }
+
+  /* chanhdai link utilities */
+  .link {
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+  .link:hover { text-decoration: underline; }
+
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-color: color-mix(in oklab, currentColor 30%, transparent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.15s;
+  }
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+  }
+
+  /* no-scrollbar */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* dot-grid texture */
+  .dot-grid {
+    background-image: radial-gradient(color-mix(in oklab, var(--color-foreground) 6%, transparent) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .dot-grid-inv {
+    background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #E11D48 0%, #F43F5E 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* text balance */
+  .text-balance { text-wrap: balance; }
+
+  /* fade-in-up */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up { animation: fade-in-up 0.5s var(--ease-expo-out) both; }
+  .animate-delay-100  { animation-delay: 0.1s; }
+  .animate-delay-200  { animation-delay: 0.2s; }
+  .animate-delay-300  { animation-delay: 0.3s; }
+  .animate-delay-400  { animation-delay: 0.4s; }
+}
+
+/* ─────────────────────────────────────────────
+   Components — chanhdai-aligned
+───────────────────────────────────────────── */
 @layer components {
-  /* ── Buttons ─────────────────────────────────────────── */
+
+  /* ── Button — chanhdai: h-9, rounded-lg, active:scale-[0.98], shadow-xs ── */
   .btn-primary {
-    @apply bg-brand-base text-white px-4 py-2 rounded-btn font-medium transition-all duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;          /* h-9 */
+    padding: 0 0.875rem;      /* px-3.5 */
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.15s, opacity 0.15s, transform 0.1s;
+    cursor: pointer;
+    user-select: none;
   }
-  .btn-primary:active:not(:disabled) {
-    @apply bg-brand-hover;
-    transform: translateY(0);
+  .btn-primary:hover  { background-color: color-mix(in oklab, var(--color-primary) 80%, transparent); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:focus-visible {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
-  .btn-primary:hover:not(:disabled) {
-    @apply bg-brand-hover;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px -1px rgba(225, 29, 72, 0.2);
-  }
+  .btn-primary:disabled { pointer-events: none; opacity: 0.5; }
 
+  .btn-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    background-color: var(--color-brand);
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    transition: background-color 0.15s, transform 0.1s;
+    cursor: pointer;
+    user-select: none;
+  }
+  .btn-brand:hover  { background-color: var(--color-brand-hover); }
+  .btn-brand:active { transform: scale(0.98); }
+  .btn-brand:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 30%, transparent);
+  }
+  .btn-brand:disabled { pointer-events: none; opacity: 0.5; }
+
+  /* Black secondary button */
+  .btn-dark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    transition: opacity 0.15s, transform 0.1s;
+    cursor: pointer;
+    user-select: none;
+  }
+  .btn-dark:hover  { opacity: 0.85; }
+  .btn-dark:active { transform: scale(0.98); }
+  .btn-dark:disabled { pointer-events: none; opacity: 0.5; }
+
+  /* chanhdai outline button */
   .btn-secondary {
-    @apply bg-transparent border border-border-base text-text-primary px-4 py-2 rounded-btn font-medium transition-all duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding: 0 0.875rem;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-xs);
+    transition: background-color 0.15s, transform 0.1s;
+    cursor: pointer;
+    user-select: none;
   }
-  .btn-secondary:active:not(:disabled) {
-    @apply bg-slate-100;
-    transform: translateY(0);
+  .btn-secondary:hover  { background-color: var(--color-muted); }
+  .btn-secondary:active { transform: scale(0.98); }
+  .btn-secondary:focus-visible {
+    outline: none;
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 50%, transparent);
   }
-  .btn-secondary:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  }
+  .btn-secondary:disabled { pointer-events: none; opacity: 0.5; }
 
-  /* ── Inputs ──────────────────────────────────────────── */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    height: 2.25rem;
+    padding: 0 0.625rem;
+    background-color: transparent;
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-lg);
+    border: 1px solid transparent;
+    transition: background-color 0.15s, color 0.15s, transform 0.1s;
+    cursor: pointer;
+  }
+  .btn-ghost:hover  { background-color: var(--color-muted); color: var(--color-foreground); }
+  .btn-ghost:active { transform: scale(0.98); }
+
+  /* ── Input — chanhdai: h-9, rounded-lg, ring-3 on focus ── */
   .input-field {
-    @apply w-full px-3 py-2 text-sm rounded-input border border-border-base bg-bg-base focus:outline-none focus:border-brand-base focus:ring-1 focus:ring-brand-base transition-all duration-150 ease-in-out placeholder:text-slate-400 text-text-primary;
-  }
-
-  /* ── Cards ───────────────────────────────────────────── */
-  .card {
-    @apply bg-card-bg border border-border-base rounded-card shadow-card hover:shadow-hover transition-all duration-150 ease-in-out p-6;
-  }
-
-  .page-container {
-    @apply max-w-[1200px] w-full mx-auto px-4 md:px-8;
-  }
-
-  /* ── Legacy Split-screen layout (Deprecating in favor of flex grid) ─── */
-  .split-layout {
-    @apply max-w-[1400px] mx-auto flex gap-6 items-start;
-  }
-
-  .split-left {
-    /* Left form panel — scrolls naturally with page */
-    @apply w-full lg:w-[45%] xl:w-[40%];
-  }
-
-  .split-right {
-    /* Right preview pane — sticky on desktop */
-    @apply w-full lg:w-[55%] xl:w-[60%] hidden lg:flex;
-  }
-
-  .invoice-form-panel {
-    @apply w-full;
-  }
-
-  /* ── Preview sticky wrapper ───────────────────────────────── */
-  .preview-sticky-wrapper {
-    @apply w-full sticky top-24 flex flex-col;
-    max-height: calc(100vh - 7rem);
-  }
-
-  /* Live preview badge */
-  .preview-label {
-    @apply flex items-center gap-1.5 text-[10px] uppercase font-semibold text-text-secondary mb-2 px-1 tracking-wider;
-  }
-
-  .preview-label-dot {
-    @apply inline-block w-1.5 h-1.5 rounded-full bg-emerald-400;
-  }
-
-  /* ── Preview toolbar ──────────────────────────────────────── */
-  .preview-toolbar {
-    @apply flex items-center justify-between px-3 py-2 bg-white border border-border-base rounded-md mb-3 shadow-card;
-  }
-
-  .preview-zoom-select-wrapper {
-    @apply flex items-center gap-1.5 relative;
-  }
-
-  .preview-zoom-select {
-    @apply appearance-none bg-transparent text-xs font-semibold text-text-secondary border-none pl-0 pr-5 py-1 focus:ring-0 cursor-pointer;
-  }
-
-  .preview-icon-btn {
-    @apply p-1.5 rounded-md text-text-secondary hover:text-text-primary hover:bg-slate-50 transition-colors duration-150;
-  }
-
-  .preview-download-btn {
-    @apply flex items-center gap-1.5 px-3 py-1.5 bg-brand-base text-white text-xs font-semibold rounded-md hover:bg-brand-hover transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed;
-  }
-
-  /* ── A4 Canvas scroll area ────────────────────────────────── */
-  .preview-scroll-area {
-    @apply flex-1 overflow-y-auto bg-bg-base p-6 border border-border-base rounded-md;
-  }
-
-  /* Zoom wrapper: only the contained A4 card is scaled */
-  .preview-zoom-wrapper {
-    @apply flex justify-center;
-    transition: transform 0.15s ease-in-out;
-  }
-
-  /* The A4 card itself — 794px = 210mm at 96dpi */
-  .a4-canvas {
-    width: 794px;
-    min-height: 1123px;
-    @apply bg-white border border-border-base flex-shrink-0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
-
-  /* ── View toggle ──────────────────────────────────────────── */
-  .view-toggle-btn {
-    @apply flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary transition-all duration-150;
-  }
-
-  .view-toggle-active {
-    @apply bg-white text-text-primary shadow-sm border border-border-base;
-  }
-
-  /* ── Kanban board ─────────────────────────────────────────── */
-  .kanban-board {
-    @apply flex gap-4 overflow-x-auto pb-6;
-    min-height: calc(100vh - 300px);
-  }
-
-  .kanban-col {
-    @apply flex flex-col flex-shrink-0 bg-bg-base border border-border-base rounded-md;
-    width: 260px;
-    min-height: 480px;
-  }
-
-  .kanban-col-readonly {
-    @apply opacity-90;
-  }
-
-  .kanban-col-header {
-    @apply flex items-center justify-between px-3 py-2 border-b border-border-base bg-white rounded-t-md;
-  }
-
-  .kanban-col-body {
-    @apply flex flex-col gap-2 p-2 flex-1;
-  }
-
-  .kanban-empty-slot {
-    @apply flex items-center justify-center h-12 rounded-md border border-dashed border-border-base text-xs font-medium text-text-secondary m-2;
-  }
-
-  .kanban-card {
-    @apply bg-white rounded-md p-3 border border-border-base cursor-pointer shadow-card hover:border-brand-base transition-all duration-150;
-  }
-
-  /* ── Overdue badge ────────────────────────────────────────── */
-  .badge-overdue {
-    @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider bg-red-50 text-red-600 border border-red-100;
-  }
-
-  /* ── Invoice Drawer ───────────────────────────────────────── */
-  .drawer-overlay {
-    @apply fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-sm;
-  }
-
-  .invoice-drawer {
-    @apply fixed top-0 right-0 h-full bg-white flex flex-col z-50 shadow-2xl border-l border-border-base;
+    height: 2.25rem;
     width: 100%;
+    min-width: 0;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.875rem;
+    background-color: transparent;
+    color: var(--color-foreground);
+    border: 1px solid var(--color-input);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xs);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+  }
+  .input-field::placeholder { color: var(--color-muted-foreground); }
+  .input-field:focus {
+    border-color: var(--color-ring);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-ring) 50%, transparent);
+  }
+  .input-field:disabled { pointer-events: none; cursor: not-allowed; opacity: 0.5; }
+
+  /* ── Card — chanhdai: rounded-xl, ring-1 ring-foreground/10, shadow-xs ── */
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    background-color: var(--color-card);
+    padding: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--color-card-foreground);
+    box-shadow: var(--shadow-xs);
+    ring-width: 1px;
+    outline: 1px solid color-mix(in oklab, var(--color-foreground) 10%, transparent);
   }
 
-  @media (min-width: 768px) {
-    .invoice-drawer { width: 400px; }
+  /* Glow card variant */
+  .glow-card {
+    background: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    transition-timing-function: var(--ease-expo-out);
+  }
+  .glow-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle at 50% 0%, color-mix(in oklab, var(--color-brand) 8%, transparent) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .glow-card:hover::before { opacity: 1; }
+  .glow-card:hover {
+    border-color: color-mix(in oklab, var(--color-brand) 25%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-brand) 10%, transparent),
+                0 4px 24px color-mix(in oklab, var(--color-brand) 12%, transparent);
+    transform: translateY(-1px);
   }
 
-  .drawer-header {
-    @apply flex items-start justify-between gap-4 px-5 py-4 border-b border-border-base flex-shrink-0 bg-white;
+  /* ── section-label (supermemory pattern) ── */
+  .section-label-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .section-label-text {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+  }
+  .section-label-page {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-muted-foreground);
+    font-variant-numeric: tabular-nums;
   }
 
-  .drawer-body {
-    @apply flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-bg-base;
-  }
+  /* ── page container ── */
+  .page-container { max-width: 1200px; width: 100%; margin: 0 auto; padding: 0 1rem; }
+  @media (min-width: 768px) { .page-container { padding: 0 2rem; } }
 
-  .drawer-footer {
-    @apply flex gap-2 px-5 py-3 border-t border-border-base bg-white flex-shrink-0;
-  }
+  /* ─── Preserved dashboard/app classes ────────────────── */
+  .split-layout { @apply max-w-[1400px] mx-auto flex gap-6 items-start; }
+  .split-left   { @apply w-full lg:w-[45%] xl:w-[40%]; }
+  .split-right  { @apply w-full lg:w-[55%] xl:w-[60%] hidden lg:flex; }
+  .invoice-form-panel { @apply w-full; }
 
-  .drawer-amount-block {
-    @apply bg-white border border-border-base rounded-md px-4 py-3 shadow-card;
-  }
+  .preview-sticky-wrapper { @apply w-full sticky top-24 flex flex-col; max-height: calc(100vh - 7rem); }
+  .preview-label           { @apply flex items-center gap-1.5 text-[10px] uppercase font-semibold text-text-secondary mb-2 px-1 tracking-wider; }
+  .preview-label-dot       { @apply inline-block w-1.5 h-1.5 rounded-full bg-emerald-400; }
+  .preview-toolbar         { @apply flex items-center justify-between px-3 py-2 bg-white border border-border-base rounded-lg mb-3 shadow-xs; }
+  .preview-zoom-select     { @apply appearance-none bg-transparent text-xs font-semibold text-text-secondary border-none pl-0 pr-5 py-1 focus:ring-0 cursor-pointer; }
+  .preview-icon-btn        { @apply p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-muted transition-colors duration-150; }
+  .preview-download-btn    { @apply flex items-center gap-1.5 px-3 py-1.5 bg-brand-base text-white text-xs font-semibold rounded-lg hover:bg-brand-hover transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed; }
+  .preview-scroll-area     { @apply flex-1 overflow-y-auto bg-bg-base p-6 border border-border-base rounded-lg; }
+  .preview-zoom-wrapper    { @apply flex justify-center; transition: transform 0.15s ease-in-out; }
+  .a4-canvas               { width: 794px; min-height: 1123px; @apply bg-white border border-border-base flex-shrink-0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  .view-toggle-btn         { @apply flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-text-primary transition-all duration-150; }
+  .view-toggle-active      { @apply bg-white text-text-primary shadow-xs border border-border-base; }
 
-  .drawer-section {
-    @apply pt-3;
-  }
+  .kanban-board      { @apply flex gap-4 overflow-x-auto pb-6; min-height: calc(100vh - 300px); }
+  .kanban-col        { @apply flex flex-col flex-shrink-0 bg-bg-base border border-border-base rounded-xl; width: 260px; min-height: 480px; }
+  .kanban-col-header { @apply flex items-center justify-between px-3 py-2 border-b border-border-base bg-white rounded-t-xl; }
+  .kanban-col-body   { @apply flex flex-col gap-2 p-2 flex-1; }
+  .kanban-empty-slot { @apply flex items-center justify-center h-12 rounded-lg border border-dashed border-border-base text-xs font-medium text-text-secondary m-2; }
+  .kanban-card       { @apply bg-white rounded-lg p-3 border border-border-base cursor-pointer shadow-xs hover:border-brand-base transition-all duration-150; }
+  .badge-overdue     { @apply inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider bg-red-50 text-red-600 border border-red-100; }
 
-  .drawer-section-title {
-    @apply flex items-center gap-1.5 text-[10px] uppercase font-semibold text-text-secondary mb-2 tracking-wider;
-  }
+  .drawer-overlay      { @apply fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm; }
+  .invoice-drawer      { @apply fixed top-0 right-0 h-full bg-white flex flex-col z-50 shadow-xl border-l border-border-base; width: 100%; }
+  @media (min-width: 768px) { .invoice-drawer { width: 400px; } }
+  .drawer-header       { @apply flex items-start justify-between gap-4 px-5 py-4 border-b border-border-base flex-shrink-0 bg-white; }
+  .drawer-body         { @apply flex-1 overflow-y-auto px-5 py-4 space-y-4 bg-bg-base; }
+  .drawer-footer       { @apply flex gap-2 px-5 py-3 border-t border-border-base bg-white flex-shrink-0; }
+  .drawer-amount-block { @apply bg-white border border-border-base rounded-lg px-4 py-3 shadow-xs; }
+  .drawer-section      { @apply pt-3; }
+  .drawer-section-title{ @apply flex items-center gap-1.5 text-[10px] uppercase font-semibold text-text-secondary mb-2 tracking-wider; }
+  .drawer-label        { @apply text-[10px] uppercase font-semibold text-text-secondary mb-0.5 tracking-wider; }
+  .drawer-value        { @apply text-sm text-text-primary; }
+  .drawer-action-btn   { @apply flex justify-center items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-border-base text-text-primary hover:bg-muted transition-colors duration-150 flex-1; }
+  .drawer-action-success { @apply bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none; }
+  .drawer-action-danger  { @apply bg-white text-red-600 hover:bg-red-50 hover:border-red-200; }
 
-  .drawer-label {
-    @apply text-[10px] uppercase font-semibold text-text-secondary mb-0.5 tracking-wider;
-  }
-
-  .drawer-value {
-    @apply text-sm text-text-primary;
-  }
-
-  .drawer-action-btn {
-    @apply flex justify-center items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-white border border-border-base text-text-primary hover:bg-slate-50 transition-colors duration-150 flex-1;
-  }
-
-  .drawer-action-success {
-    @apply bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-none;
-  }
-
-  .drawer-action-danger {
-    @apply bg-white text-red-600 hover:bg-red-50 hover:border-red-200;
-  }
-
-  /* ── Table view ───────────────────────────────────────────── */
-  .table-th {
-    @apply px-4 py-3 text-left text-xs font-medium text-text-secondary border-b border-border-base;
-  }
-
-  .table-td {
-    @apply px-4 py-3 text-sm border-b border-border-base text-text-primary;
-  }
-
-  .table-row {
-    @apply cursor-pointer hover:bg-slate-50 transition-colors duration-150;
-  }
+  .table-th  { @apply px-4 py-3 text-left text-xs font-medium text-text-secondary border-b border-border-base; }
+  .table-td  { @apply px-4 py-3 text-sm border-b border-border-base text-text-primary; }
+  .table-row { @apply cursor-pointer hover:bg-muted transition-colors duration-150; }
 }

@@ -1,125 +1,153 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import Button from './ui/Button';
 import LogoIcon from './ui/LogoIcon';
 
+const NAV_LINKS = [
+  { label: 'Features',    id: 'features' },
+  { label: 'How it works',id: 'how-it-works' },
+  { label: 'Pricing',     id: 'pricing' },
+  { label: 'Customers',   id: 'testimonials' },
+];
+
 const Navbar = () => {
-    const [isOpen, setIsOpen] = useState(false);
-    const { user, logout } = useAuth();
-    const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isLanding = location.pathname === '/';
 
-    const handleLogout = async () => {
-        await logout();
-        navigate('/signin');
-    };
+  const handleLogout = async () => { await logout(); navigate('/signin'); };
 
-    const handleNavClick = (e, targetId) => {
-        if (location.pathname === '/') {
-            e.preventDefault();
-            const el = document.getElementById(targetId);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth' });
-                setIsOpen(false);
-            }
-        }
-        // If not on '/', the standard href="/#targetId" will natively navigate and jump
-    };
+  const handleNavClick = (e, id) => {
+    if (isLanding) {
+      e.preventDefault();
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      setMobileOpen(false);
+    }
+  };
 
-    return (
-        <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-150 bg-brand-base border-b border-white/20">
-            <div className="max-w-7xl mx-auto px-6 lg:px-8 h-16 flex items-center justify-between relative">
-                
-                {/* Continuous Vertical Grid Lines */}
-                <div className="absolute inset-0 pointer-events-none hidden md:block">
-                  <div className="h-full border-l border-white/20 absolute left-0" />
-                  <div className="h-full border-l border-white/20 absolute right-0" />
-                </div>
+  return (
+    <>
+      <header className="sticky top-0 z-50 w-full overflow-x-hidden bg-background px-2 sm:px-4 lg:px-[5%] pt-2">
+        <div className="screen-line-top screen-line-bottom relative mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-2 border-x px-6 sm:px-12 md:px-16 lg:px-24"
+          style={{ borderColor: 'var(--color-line)' }}
+        >
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-3 group transition-transform ease-out active:scale-[0.98]">
+            <LogoIcon className="h-8 w-auto" />
+            <span className="text-lg sm:text-xl font-bold tracking-tighter text-foreground font-heading mt-0.5">
+              Swift Invoice<span className="text-brand">.</span>
+            </span>
+          </Link>
 
-                {/* 1. Logo */}
-                <Link to="/" className="flex items-center gap-2 group relative z-10">
-                    <LogoIcon className="w-6 h-6 text-white group-hover:text-rose-200 transition-colors" strokeWidth={6} />
-                    <span className="text-lg font-semibold tracking-tight text-white">Swift Invoice</span>
+          <div className="flex-1" />
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-8">
+            {NAV_LINKS.map(({ label, id }) => (
+              <a
+                key={id}
+                href={`/#${id}`}
+                onClick={(e) => handleNavClick(e, id)}
+                className="text-sm font-medium tracking-tight text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="flex-1" />
+
+          {/* Right controls */}
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <Link to="/dashboard" className="hidden md:block">
+                  <button className="btn-secondary h-10 px-6 text-sm">Dashboard</button>
                 </Link>
-
-                {/* 2. Middle Links (Desktop) */}
-                <div className="hidden md:flex items-center justify-center gap-8 relative z-10">
-                    <a href="/#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Features</a>
-                    <a href="/#testimonials" onClick={(e) => handleNavClick(e, 'testimonials')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Case Studies</a>
-                    <a href="/#pricing" onClick={(e) => handleNavClick(e, 'pricing')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Pricing</a>
-                    <a href="/#blog" onClick={(e) => handleNavClick(e, 'blog')} className="text-sm font-medium text-white/80 hover:text-white transition-colors tracking-tight">Blog</a>
-                </div>
-
-                {/* 3. Right Side */}
-                <div className="flex items-center gap-4 relative z-10">
-                    {user ? (
-                        <>
-                            <span className="text-sm font-medium text-white/80 hidden sm:block tracking-tight">
-                                {user.name}
-                            </span>
-                            <Link to="/dashboard" className="hidden md:block">
-                                <Button variant="secondary" size="sm" className="shadow-none bg-white text-brand-base border-0 hover:bg-slate-50 font-semibold px-5 tracking-tight">Dashboard</Button>
-                            </Link>
-                            <button
-                                onClick={handleLogout}
-                                className="p-1.5 hover:bg-white/10 rounded text-white/80 hover:text-white transition-colors hidden md:block"
-                                title="Logout"
-                            >
-                                <LogOut size={16} />
-                            </button>
-                        </>
-                    ) : (
-                        <div className="hidden md:flex items-center gap-4">
-                            <Link to="/signin">
-                                <Button variant="secondary" size="sm" className="shadow-none px-6 bg-white text-brand-base border-0 hover:bg-slate-50 font-semibold tracking-tight">Get Started</Button>
-                            </Link>
-                        </div>
-                    )}
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        className="md:hidden p-1.5 text-white/80 hover:bg-white/10 rounded"
-                        onClick={() => setIsOpen(!isOpen)}
-                    >
-                        {isOpen ? <X size={20} /> : <Menu size={20} />}
-                    </button>
-                </div>
-            </div>
-
-            {/* Mobile Menu Overlay */}
-            {isOpen && (
-                <div className="md:hidden fixed inset-0 top-16 bg-brand-base z-40 p-6 flex flex-col gap-6 border-t border-rose-500/30 transition-all">
-                    {user ? (
-                        <>
-                            <div className="flex items-center gap-3 p-4 bg-white/10 rounded border border-white/10">
-                                <div className="w-8 h-8 bg-white text-brand-base rounded flex items-center justify-center font-semibold text-sm">
-                                    {user.name.charAt(0)}
-                                </div>
-                                <div>
-                                    <div className="font-semibold text-white text-sm tracking-tight">{user.name}</div>
-                                    <div className="text-xs text-white/80 tracking-tight">{user.email}</div>
-                                </div>
-                            </div>
-                            <Link to="/dashboard" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Dashboard</Link>
-                            <Link to="/invoices" onClick={() => setIsOpen(false)} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">History</Link>
-                            <button onClick={handleLogout} className="text-sm font-semibold p-3 text-left text-rose-200 hover:bg-white/10 rounded transition-colors tracking-tight">Sign Out</button>
-                        </>
-                    ) : (
-                        <>
-                            <a href="/#features" onClick={(e) => handleNavClick(e, 'features')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Features</a>
-                            <a href="/#blog" onClick={(e) => handleNavClick(e, 'blog')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Blog</a>
-                            <a href="/#testimonials" onClick={(e) => handleNavClick(e, 'testimonials')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Case Studies</a>
-                            <a href="/#pricing" onClick={(e) => handleNavClick(e, 'pricing')} className="text-sm font-semibold p-3 border-b border-white/10 text-white tracking-tight">Pricing</a>
-                            <Link to="/signin" onClick={() => setIsOpen(false)} className="w-full mt-4">
-                                <Button variant="secondary" className="w-full bg-white text-brand-base font-semibold tracking-tight">Get Started</Button>
-                            </Link>
-                        </>
-                    )}
-                </div>
+                <button
+                  onClick={handleLogout}
+                  className="btn-ghost h-10 w-10 p-0 hidden md:flex items-center justify-center text-muted-foreground"
+                  title="Sign out"
+                >
+                  <LogOut size={16} />
+                </button>
+              </>
+            ) : (
+              <div className="hidden md:flex items-center gap-3">
+                <Link to="/signin">
+                  <button className="btn-ghost h-10 px-6 text-sm font-medium">Log in</button>
+                </Link>
+                <Link to="/signup">
+                  <button className="btn-brand h-10 px-6 text-sm font-medium flex items-center gap-2">
+                    <Zap size={14} className="fill-current" />
+                    Get Started
+                  </button>
+                </Link>
+              </div>
             )}
-        </nav>
-    );
+
+            {/* Mobile toggle */}
+            <button
+              className="btn-ghost md:hidden h-10 w-10 p-0 flex items-center justify-center"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle menu"
+            >
+              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          </div>
+
+          {/* chanhdai corner markers — top-left & top-right */}
+          <div className="absolute top-[-3.5px] left-[-4.5px] z-10 flex size-2 border bg-background"
+            style={{ borderColor: 'var(--color-line)' }} />
+          <div className="absolute top-[-3.5px] right-[-4.5px] z-10 flex size-2 border bg-background"
+            style={{ borderColor: 'var(--color-line)' }} />
+        </div>
+
+        {/* Mobile menu */}
+        {mobileOpen && (
+          <div className="md:hidden mx-auto w-full max-w-[1600px] border-x border-b bg-background px-6 pb-6"
+            style={{ borderColor: 'var(--color-line)' }}
+          >
+            <nav className="flex flex-col gap-0 pt-4">
+              {NAV_LINKS.map(({ label, id }) => (
+                <a
+                  key={id}
+                  href={`/#${id}`}
+                  onClick={(e) => handleNavClick(e, id)}
+                  className="py-4 text-base font-medium tracking-tight text-muted-foreground hover:text-foreground border-b last:border-0 transition-colors"
+                  style={{ borderColor: 'var(--color-line)' }}
+                >
+                  {label}
+                </a>
+              ))}
+            </nav>
+            <div className="flex flex-col gap-3 pt-6">
+              {user ? (
+                <>
+                  <Link to="/dashboard" onClick={() => setMobileOpen(false)}>
+                    <button className="btn-secondary w-full h-12 justify-center text-base">Dashboard</button>
+                  </Link>
+                  <button onClick={handleLogout} className="text-base font-medium text-destructive hover:underline text-left py-2">Sign out</button>
+                </>
+              ) : (
+                <>
+                  <Link to="/signin" onClick={() => setMobileOpen(false)}>
+                    <button className="btn-secondary w-full h-12 justify-center text-base">Log in</button>
+                  </Link>
+                  <Link to="/signup" onClick={() => setMobileOpen(false)}>
+                    <button className="btn-brand w-full h-12 justify-center text-base">Get Started Free</button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </header>
+    </>
+  );
 };
 
 export default Navbar;

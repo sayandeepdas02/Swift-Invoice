@@ -2,7 +2,9 @@ import React from 'react';
 
 const Card = ({ children, className = '', padding = 'p-6' }) => {
     return (
-        <div className={`bg-white border border-slate-200 rounded-sm shadow-[0_1px_3px_rgba(0,0,0,0.05)] ${padding} ${className}`}>
+        <div className={`bg-background border border-line rounded-sm shadow-xs ${padding} ${className}`}
+          style={{ borderColor: 'var(--color-line)' }}
+        >
             {children}
         </div>
     );
