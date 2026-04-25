@@ -97,7 +97,7 @@ const Footer = () => {
           <div
             className="text-[clamp(4rem,12vw,14rem)] font-bold tracking-tighter leading-none text-transparent font-heading select-none whitespace-nowrap"
             style={{
-              WebkitTextStroke: '1px rgba(255,255,255,0.06)',
+              WebkitTextStroke: '1.5px rgba(225, 29, 72, 0.15)',
             }}
           >
             SWIFT INVOICE
