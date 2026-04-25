@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useGoogleLogin } from '@react-oauth/google';
 import { ArrowRight, Check } from 'lucide-react';
+import Navbar from '../../components/Navbar';
 import LogoIcon from '../../components/ui/LogoIcon';
 
 const GoogleIcon = () => (
@@ -53,25 +54,8 @@ const SignUp = () => {
   return (
     <div className="w-full bg-background min-h-screen flex flex-col selection:bg-brand/10 selection:text-brand">
 
-      {/* ── Top bar matching Navbar grid ── */}
-      <div className="w-full overflow-x-hidden bg-background px-2 sm:px-4 lg:px-[5%] pt-2">
-        <div className="screen-line-top screen-line-bottom mx-auto w-full max-w-[1600px] border-x h-16 flex items-center px-6 sm:px-12 md:px-16 lg:px-24"
-          style={{ borderColor: 'var(--color-line)' }}>
-          <Link to="/" className="flex items-center gap-3 group transition-transform active:scale-[0.98]">
-            <LogoIcon className="h-8 w-auto" />
-            <span className="text-xl font-bold tracking-tighter text-foreground font-heading mt-0.5">
-              Swift Invoice<span className="text-brand">.</span>
-            </span>
-          </Link>
-          <div className="flex-1" />
-          <p className="text-sm font-medium text-muted-foreground">
-            Already have an account?{' '}
-            <Link to="/signin" className="font-bold text-foreground hover:text-brand transition-colors">
-              Sign in
-            </Link>
-          </p>
-        </div>
-      </div>
+      {/* ── Navbar ── */}
+      <Navbar />
 
       {/* ── Main Content ── */}
       <div className="flex-1 w-full overflow-x-hidden px-2 sm:px-4 lg:px-[5%]">

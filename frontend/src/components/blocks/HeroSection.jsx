@@ -2,31 +2,43 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import ShimmeringText from '../ui/ShimmeringText';
+import LiquidEther from '../ui/LiquidEther';
 
 const HeroSection = () => {
   return (
-    <section id="hero" className="w-full overflow-x-hidden bg-background px-2 sm:px-4 lg:px-[5%] pt-10">
-      <div className="screen-line-top mx-auto w-full max-w-[1600px] border-x"
+    <section id="hero" className="w-full overflow-x-hidden bg-background px-2 sm:px-4 lg:px-[5%] pt-0">
+      <div className="mx-auto w-full max-w-[1600px] border-x"
         style={{ borderColor: 'var(--color-line)' }}
       >
         <div className="relative border-b" style={{ borderColor: 'var(--color-line)' }}>
-          {/* dot-grid texture */}
-          <div className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: 'radial-gradient(var(--pattern-foreground) 1px, transparent 0)',
-              backgroundSize: '15px 15px',
-              backgroundPosition: 'center',
-              '--pattern-foreground': 'color-mix(in oklab, var(--color-foreground) 8%, transparent)'
-            }}
-          />
+          {/* LiquidEther background — brand pink, subtle, behind all content */}
+          <div className="absolute inset-0 pointer-events-none overflow-hidden">
+            <LiquidEther
+              colors={['#E11D48', '#BE123C', '#9F1239']}
+              mouseForce={15}
+              cursorSize={80}
+              isViscous={true}
+              viscous={25}
+              iterationsViscous={24}
+              iterationsPoisson={24}
+              resolution={0.4}
+              isBounce={false}
+              autoDemo={true}
+              autoSpeed={0.4}
+              autoIntensity={1.5}
+              takeoverDuration={0.25}
+              autoResumeDelay={2000}
+              autoRampDuration={0.8}
+            />
+          </div>
 
           <div className="relative z-10 mx-auto w-full px-6 sm:px-12 md:px-16 lg:px-24 pt-16 pb-20">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              
+
               {/* Left Column: Typography */}
               <div className="flex flex-col items-start text-left">
                 {/* Announcement badge */}
-                <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-sm border bg-muted/30 px-2 py-1 font-mono text-[10px] font-semibold text-muted-foreground uppercase tracking-widest"
+                <div className="animate-fade-in-up mb-8 inline-flex items-center gap-2 rounded-sm border bg-background/80 backdrop-blur-sm px-2 py-1 font-mono text-[10px] font-semibold text-muted-foreground uppercase tracking-widest"
                   style={{ borderColor: 'var(--color-border)' }}
                 >
                   <span className="size-1.5 rounded-full bg-brand flex-shrink-0 animate-pulse" />
