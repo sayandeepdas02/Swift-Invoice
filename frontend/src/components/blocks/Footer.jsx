@@ -95,9 +95,9 @@ const Footer = () => {
         {/* Giant watermark text */}
         <div className="overflow-hidden px-6 sm:px-12 md:px-16 lg:px-24 pb-4">
           <div
-            className="text-[clamp(4rem,12vw,14rem)] font-bold tracking-tighter leading-none text-transparent font-heading select-none whitespace-nowrap"
+            className="text-[clamp(4rem,12vw,14rem)] font-bold tracking-tighter leading-none text-white select-none whitespace-nowrap"
             style={{
-              WebkitTextStroke: '1.5px rgba(225, 29, 72, 0.15)',
+              fontFamily: "'Space Grotesk', sans-serif",
             }}
           >
             SWIFT INVOICE
